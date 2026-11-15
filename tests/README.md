@@ -21,14 +21,14 @@ ReplicatedStorage
     └── DifferentialPathGeometry
 
 ServerScriptService
-└── RunAll.server.lua
+└── VectorForgeIntegrationTest.lua
 ```
 
 ### Running the Tests
 
 1. Open your project in Roblox Studio.
 2. Verify that all four ModuleScripts are installed correctly.
-3. Place `RunAll.server.lua` inside `ServerScriptService`.
+3. Place `VectorForgeIntegrationTest.lua` inside `ServerScriptService`.
 4. Start a Play test.
 5. Open the Output window.
 6. Inspect the individual test results and final execution summary.

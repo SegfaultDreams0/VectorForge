@@ -309,7 +309,7 @@ VectorForge/
 │
 ├── tests/
 │   ├── README.md
-│   └── RunAll.server.lua
+│   └── VectorForgeIntegrationTest.lua
 │
 ├── .gitignore
 ├── CHANGELOG.md

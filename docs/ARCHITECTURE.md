@@ -1,4 +1,4 @@
-# VectorForge
+# Architecture
 
 This document describes the internal organization, module responsibilities, dependency relationships, and runtime integration principles of VectorForge.
 

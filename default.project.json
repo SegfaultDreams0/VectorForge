@@ -5,7 +5,7 @@
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
       "VectorForge": {
-        "$path": "src"
+        "$path": "src/VectorForge"
       }
     }
   }

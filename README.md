@@ -532,5 +532,9 @@ VectorForge is an ongoing experimental project exploring how advanced computatio
 It is not intended to be presented as a finished framework or a complete replacement for specialized numerical software.
 
 The purpose of sharing this project is to document the work, experiment with mathematical implementations, explore possible applications, and make its development accessible to other developers interested in the same field.
+## Credits
+
+Creator: Bighnika Akene
+Discord: towlerblio
 
 **The project is still a work in progress, and there is considerably more to explore.**

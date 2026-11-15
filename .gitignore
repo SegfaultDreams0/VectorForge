@@ -1,0 +1,24 @@
+# Roblox / Rojo build output
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
+*.rbxm.lock
+
+# Tool output
+build/
+dist/
+.cache/
+node_modules/
+
+# Editor and operating-system files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.log

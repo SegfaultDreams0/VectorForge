@@ -1,0 +1,12 @@
+{
+  "name": "VectorForge",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "VectorForge": {
+        "$path": "src"
+      }
+    }
+  }
+}

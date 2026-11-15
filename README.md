@@ -294,11 +294,12 @@ VectorForge/
 │   └── MATHEMATICS.md
 │
 ├── examples/
-│   ├── README.md
-│   ├── PoseInterpolation.lua
-│   ├── DifferentialPath.lua
-│   ├── BayesianMotionTracking.lua
-│   └── LeastSquaresRegression.lua
+│   └── server/
+│       ├── README.md
+│       ├── PoseInterpolation.lua
+│       ├── DifferentialPath.lua
+│       ├── BayesianMotionTracking.lua
+│       └── LeastSquaresRegression.lua
 │
 ├── src/
 │   └── VectorForge/

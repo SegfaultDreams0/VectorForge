@@ -253,7 +253,7 @@ VectorForge follows a modular architecture in which each mathematical component 
           +--------------+--------------+
           |              |              |
           v              v              v
-   LieGroupKinematics  SpectralLinearAlgebra
+ LieGroupKinematics      |      SpectralLinearAlgebra
           |              |
           |              |
           v              v
@@ -262,8 +262,10 @@ VectorForge follows a modular architecture in which each mathematical component 
                          |
                          v
                BayesianStateEstimation
-
-          DifferentialPathGeometry
+                         |
+                         |
+                         v
+              DifferentialPathGeometry
                          |
                          v
                  Curve Computation

@@ -812,11 +812,9 @@ for _, Result in ipairs(ExperimentResults) do
     end
 end
 
-print("[VectorForge Tester] ========================================")
 print(string.format("[VectorForge Tester] EXPERIMENTS | %d passed | %d failed | %d total", TotalExperimentsPassed, TotalExperimentsFailed, #ExperimentResults))
 print(string.format("[VectorForge Tester] CHECKS | %d passed | %d failed | %d total", Passed, Failed, Passed + Failed))
 print("[VectorForge Tester] VISUAL OUTPUT | Workspace.VectorForgeTesterResults")
-print("[VectorForge Tester] ========================================")
 
 if Failed > 0 then
     warn("[VectorForge Tester] Completed with failures. Review every FAIL line in the Output window.")

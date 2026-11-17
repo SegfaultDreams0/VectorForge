@@ -1,4 +1,4 @@
-# Architecture
+# VectorForge
 
 This document describes the internal organization, module responsibilities, dependency relationships, and runtime integration principles of VectorForge.
 
@@ -83,7 +83,7 @@ The library should integrate naturally with Roblox Luau and its native data type
 
 ## Module Organization
 
-VectorForge currently contains four principal mathematical modules.
+VectorForge currently contains eight principal mathematical modules.
 
 ### LieGroupKinematics
 
@@ -109,6 +109,30 @@ Responsible for curve evaluation, geometric analysis, arc-length calculations, a
 
 It separates geometric calculations from the Roblox objects that may consume their results.
 
+### AutomaticDifferentiation
+
+Responsible for derivative computation through supported mathematical expressions using automatic differentiation concepts.
+
+It is intended to support sensitivity analysis and optimization workflows.
+
+### RigidBodyDynamics
+
+Responsible for mathematical calculations associated with rigid-body motion, inertial properties, forces, and torques.
+
+It provides a dynamics-oriented layer that can be used in simulation and robotics-inspired experiments.
+
+### NumericalOptimization
+
+Responsible for numerical methods for minimizing objective functions and iteratively improving parameter estimates.
+
+Its behaviour depends on the selected method, objective function, and convergence criteria.
+
+### TrajectoryPlanning
+
+Responsible for constructing and evaluating planned motion trajectories subject to supported boundary and motion constraints.
+
+It complements curve geometry and kinematic calculations without requiring presentation-layer Roblox instances.
+
 ---
 
 ## Module Responsibilities
@@ -121,6 +145,10 @@ The following table summarizes the intended separation of responsibilities.
 | SpectralLinearAlgebra | Matrices and numeric vectors | Matrix factors and numerical solutions |
 | BayesianStateEstimation | States and observations | Updated state estimates |
 | DifferentialPathGeometry | Control points and parameters | Curve positions and geometric properties |
+| AutomaticDifferentiation | Supported expressions and inputs | Derivative information |
+| RigidBodyDynamics | Body state, forces, torques, inertial data | Updated or evaluated dynamic quantities |
+| NumericalOptimization | Objective functions and initial parameters | Candidate optimized parameters |
+| TrajectoryPlanning | Start/end states and planning parameters | Planned motion trajectories |
 
 These are conceptual categories. Actual argument and return structures are determined by the source implementations.
 
@@ -135,6 +163,9 @@ For example:
 - BayesianStateEstimation may use numerical matrix operations for covariance propagation.
 - DifferentialPathGeometry may use vector operations for tangent and frame construction.
 - LieGroupKinematics may provide transformation operations to systems consuming geometric trajectories.
+- AutomaticDifferentiation may provide derivative information to NumericalOptimization.
+- RigidBodyDynamics may consume spatial representations from LieGroupKinematics.
+- TrajectoryPlanning may combine curve information from DifferentialPathGeometry with spatial operations from LieGroupKinematics.
 
 Dependencies should remain explicit and should avoid unnecessary coupling.
 
@@ -332,7 +363,11 @@ VectorForge/
 │       ├── LieGroupKinematics.lua
 │       ├── SpectralLinearAlgebra.lua
 │       ├── BayesianStateEstimation.lua
-│       └── DifferentialPathGeometry.lua
+│       ├── DifferentialPathGeometry.lua
+│       ├── AutomaticDifferentiation.lua
+│       ├── RigidBodyDynamics.lua
+│       ├── NumericalOptimization.lua
+│       └── TrajectoryPlanning.lua
 │
 ├── docs/
 │   ├── API.md

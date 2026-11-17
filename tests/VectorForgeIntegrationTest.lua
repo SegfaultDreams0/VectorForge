@@ -51,7 +51,6 @@ local function test(name, callback)
     end
 end
 
-print("============== VECTORFORGE TEST SUITE ==============")
 
 test("SO3 exponential/logarithmic maps", function()
     local v = Vector3.new(0.2, -0.4, 0.1)
@@ -245,9 +244,7 @@ test("Minimum-jerk boundary conditions", function()
     assert(a0.Magnitude < 1e-7 and a1.Magnitude < 1e-7)
 end)
 
-print("================================================")
 print(string.format("[VectorForge] %d passed | %d failed", passed, failed))
-print("================================================")
 
 if failed > 0 then
     for _, failure in ipairs(failures) do

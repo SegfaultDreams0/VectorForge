@@ -16,6 +16,10 @@ It serves as a technical reference for developers integrating VectorForge into t
 - [SpectralLinearAlgebra](#2-spectrallinearalgebra)
 - [BayesianStateEstimation](#3-bayesianstateestimation)
 - [DifferentialPathGeometry](#4-differentialpathgeometry)
+- [AutomaticDifferentiation](#5-automaticdifferentiation)
+- [RigidBodyDynamics](#6-rigidbodydynamics)
+- [NumericalOptimization](#7-numericaloptimization)
+- [TrajectoryPlanning](#8-trajectoryplanning)
 - [Data Representations](#data-representations)
 - [Numerical Considerations](#numerical-considerations)
 - [Error Handling](#error-handling)
@@ -61,6 +65,10 @@ Modules should be required only when their functionality is needed.
 | SpectralLinearAlgebra | Numerical Linear Algebra | Matrix computation |
 | BayesianStateEstimation | Bayesian Estimation | Dynamic state estimation |
 | DifferentialPathGeometry | Differential Geometry | Curve and trajectory analysis |
+| AutomaticDifferentiation | Numerical Differentiation | Derivative propagation |
+| RigidBodyDynamics | Classical Mechanics | Rigid-body dynamics calculations |
+| NumericalOptimization | Numerical Optimization | Objective minimization |
+| TrajectoryPlanning | Motion Planning | Planned trajectory construction and evaluation |
 
 ---
 
@@ -381,6 +389,117 @@ Frenet frames can become unstable where curvature approaches zero. Parallel-tran
 Arc-length calculations are numerical approximations and depend on the integration method and sampling configuration.
 
 ---
+
+## 5. AutomaticDifferentiation
+
+**Mathematical Domain:** Automatic Differentiation and Numerical Calculus.
+
+AutomaticDifferentiation is intended to compute derivative information by propagating derivatives through supported operations.
+
+### Mathematical Concepts
+
+- Forward-mode automatic differentiation.
+- Derivative propagation.
+- Computational expressions.
+- Sensitivity analysis.
+
+### Core Mathematical Responsibilities
+
+**Derivative Evaluation**
+
+Evaluate supported expressions while tracking derivative information.
+
+**Sensitivity Analysis**
+
+Provide derivative information that can help determine how outputs change in response to input variations.
+
+### Implementation Considerations
+
+Supported value types, operation coverage, derivative conventions, and exact public interfaces must be confirmed against the module implementation. This overview does not define function signatures.
+
+## 6. RigidBodyDynamics
+
+**Mathematical Domain:** Classical Mechanics and Rigid-Body Dynamics.
+
+RigidBodyDynamics is intended to represent and evaluate quantities associated with rigid-body motion.
+
+### Mathematical Concepts
+
+- Linear motion.
+- Angular motion.
+- Forces and torques.
+- Mass and inertia.
+- Translational and rotational dynamics.
+
+### Core Mathematical Responsibilities
+
+**Dynamic Quantities**
+
+Represent or calculate supported quantities involved in rigid-body motion.
+
+**Motion Evaluation**
+
+Evaluate dynamic behaviour according to the models and inputs supported by the implementation.
+
+### Implementation Considerations
+
+The exact state representation, units, integration method, force conventions, and inertia representation must be checked against the source code.
+
+## 7. NumericalOptimization
+
+**Mathematical Domain:** Numerical Optimization and Iterative Minimization.
+
+NumericalOptimization is intended to provide methods for improving candidate parameters with respect to an objective function.
+
+### Mathematical Concepts
+
+- Objective functions.
+- Iterative minimization.
+- Gradient-based methods.
+- Convergence criteria.
+- Parameter estimation.
+
+### Core Mathematical Responsibilities
+
+**Objective Minimization**
+
+Search for parameter values that reduce an objective according to the selected algorithm.
+
+**Convergence Evaluation**
+
+Use method-specific stopping criteria to determine when an iterative process should stop.
+
+### Implementation Considerations
+
+The available algorithms, gradient requirements, constraint handling, line-search behaviour, and convergence guarantees depend on the implementation. Do not assume a specific optimizer or API signature without checking the source.
+
+## 8. TrajectoryPlanning
+
+**Mathematical Domain:** Motion Planning and Trajectory Generation.
+
+TrajectoryPlanning is intended to construct and evaluate motion trajectories between supported states or targets.
+
+### Mathematical Concepts
+
+- Trajectory construction.
+- Motion profiles.
+- Boundary conditions.
+- Smooth motion.
+- Time-dependent path evaluation.
+
+### Core Mathematical Responsibilities
+
+**Trajectory Construction**
+
+Generate a trajectory using the constraints and parameters supported by the implementation.
+
+**Trajectory Evaluation**
+
+Evaluate planned motion at supported parameters or times.
+
+### Implementation Considerations
+
+The exact trajectory representation, boundary-condition model, continuity guarantees, and relationship to DifferentialPathGeometry must be verified against the source implementation.
 
 ## Data Representations
 

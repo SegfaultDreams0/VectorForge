@@ -22,6 +22,10 @@ VectorForge is an incomplete research-oriented project. Its implementation, API,
   - [SpectralLinearAlgebra](#2-spectrallinearalgebra)
   - [BayesianStateEstimation](#3-bayesianstateestimation)
   - [DifferentialPathGeometry](#4-differentialpathgeometry)
+  - [AutomaticDifferentiation](#5-automaticdifferentiation)
+  - [RigidBodyDynamics](#6-rigidbodydynamics)
+  - [NumericalOptimization](#7-numericaloptimization)
+  - [TrajectoryPlanning](#8-trajectoryplanning)
 - [Mathematical Foundations](#mathematical-foundations)
 - [Potential Applications](#potential-applications)
 - [Architecture](#architecture)
@@ -40,7 +44,7 @@ VectorForge is an incomplete research-oriented project. Its implementation, API,
 
 ## Overview
 
-VectorForge is organized around four independent mathematical modules, each addressing a different area of computational mathematics.
+VectorForge is organized around eight mathematical modules, each addressing a different area of computational mathematics.
 
 The objective is to separate mathematical functionality into reusable components rather than implementing complex algorithms directly inside individual game scripts.
 
@@ -52,6 +56,10 @@ The library currently explores the following areas:
 | SpectralLinearAlgebra | Numerical Linear Algebra | Matrix operations and numerical solvers |
 | BayesianStateEstimation | Probability and State Estimation | Prediction, uncertainty, and measurement filtering |
 | DifferentialPathGeometry | Differential Geometry | Curves, curvature, torsion, and trajectories |
+| AutomaticDifferentiation | Numerical Differentiation | Derivative propagation through computational expressions |
+| RigidBodyDynamics | Classical Mechanics | Rigid-body motion, forces, and dynamics |
+| NumericalOptimization | Mathematical Optimization | Numerical methods for minimizing objective functions |
+| TrajectoryPlanning | Motion Planning | Construction and evaluation of planned trajectories |
 
 Each module has a distinct responsibility and is intended to operate independently where practical.
 
@@ -186,6 +194,81 @@ For example, an object moving along a curved trajectory can use arc-length param
 
 Parallel-transport frames can also help maintain smoother orientation along complex three-dimensional paths.
 
+### 5. AutomaticDifferentiation
+
+**Domain:** Automatic Differentiation and Numerical Calculus.
+
+AutomaticDifferentiation explores methods for computing derivatives by propagating derivative information through arithmetic operations and supported computational expressions.
+
+Its intended mathematical scope includes:
+- Forward-mode derivative propagation.
+- Computational expression evaluation with derivative tracking.
+- Derivatives of supported scalar and vector-valued expressions.
+- Sensitivity analysis for numerical models.
+
+**Potential applications:**
+- Gradient-based optimization.
+- Sensitivity analysis.
+- Parameter fitting.
+- Differentiable mathematical experiments.
+
+### 6. RigidBodyDynamics
+
+**Domain:** Classical Mechanics and Rigid-Body Dynamics.
+
+RigidBodyDynamics focuses on the motion of rigid bodies under applied forces, torques, and inertial properties.
+
+Its intended mathematical scope includes:
+- Linear and angular motion.
+- Mass and inertia representations.
+- Force and torque relationships.
+- Rigid-body state evolution.
+- Translational and rotational dynamics.
+
+**Potential applications:**
+- Physics experiments.
+- Robotics-inspired simulation.
+- Mechanical system modeling.
+- Motion analysis.
+
+### 7. NumericalOptimization
+
+**Domain:** Numerical Optimization and Iterative Minimization.
+
+NumericalOptimization explores numerical techniques for finding solutions that minimize objective functions subject to supported assumptions and constraints.
+
+Its intended mathematical scope includes:
+- Objective-function evaluation.
+- Iterative parameter updates.
+- Gradient-based optimization concepts.
+- Convergence and stopping criteria.
+- Numerical minimization.
+
+**Potential applications:**
+- Parameter estimation.
+- Curve fitting.
+- Mathematical calibration.
+- Optimization experiments.
+
+### 8. TrajectoryPlanning
+
+**Domain:** Motion Planning and Trajectory Generation.
+
+TrajectoryPlanning focuses on constructing and evaluating paths or time-dependent motion profiles between states or spatial targets.
+
+Its intended mathematical scope includes:
+- Trajectory construction.
+- Motion-profile evaluation.
+- Boundary-condition handling.
+- Smooth movement planning.
+- Integration with geometric and kinematic representations.
+
+**Potential applications:**
+- NPC movement.
+- Robotics-inspired path planning.
+- Camera and object motion.
+- Procedural animation.
+
 ---
 
 ## Mathematical Foundations
@@ -253,7 +336,7 @@ VectorForge follows a modular architecture in which each mathematical component 
           +--------------+--------------+
           |              |              |
           v              v              v
- LieGroupKinematics      |      SpectralLinearAlgebra
+   LieGroupKinematics  SpectralLinearAlgebra
           |              |
           |              |
           v              v
@@ -262,10 +345,8 @@ VectorForge follows a modular architecture in which each mathematical component 
                          |
                          v
                BayesianStateEstimation
-                         |
-                         |
-                         v
-              DifferentialPathGeometry
+
+          DifferentialPathGeometry
                          |
                          v
                  Curve Computation
@@ -293,23 +374,29 @@ VectorForge/
 │   ├── ARCHITECTURE.md
 │   └── MATHEMATICS.md
 │
-├── examples/
-│   └── server/
-│       ├── README.md
-│       ├── PoseInterpolation.lua
-│       ├── DifferentialPath.lua
-│       ├── BayesianMotionTracking.lua
-│       └── LeastSquaresRegression.lua
+├── examples/server/
+│   ├── README.md
+│   ├── PoseInterpolation.lua
+│   ├── DifferentialPath.lua
+│   ├── IntegrationDemo.lua
+│   ├── BayesianMotionTracking.lua
+│   └── LeastSquaresRegression.lua
 │
 ├── src/
 │   └── VectorForge/
-│       ├── LieGroupKinematics.lua
-│       ├── SpectralLinearAlgebra.lua
-│       ├── BayesianStateEstimation.lua
-│       └── DifferentialPathGeometry.lua
+│   ├── LieGroupKinematics
+│   ├── SpectralLinearAlgebra
+│   ├── BayesianStateEstimation
+│   ├── DifferentialPathGeometry
+│   ├── AutomaticDifferentiation
+│   ├── RigidBodyDynamics
+│   ├── NumericalOptimization
+│   └── TrajectoryPlanning
 │
 ├── tests/
 │   ├── README.md
+│   ├── ComprehensiveTester.lua
+│   ├── SmallTaster.lua
 │   └── VectorForgeIntegrationTest.lua
 │
 ├── .gitignore
@@ -340,7 +427,7 @@ VectorForge/
 1. Open Roblox Studio.
 2. Navigate to `ReplicatedStorage`.
 3. Create a folder named `VectorForge`.
-4. Copy the four ModuleScripts from `src/VectorForge/` into the folder.
+4. Copy the eight ModuleScripts from `src/VectorForge/` into the folder.
 5. Ensure that the ModuleScript names remain unchanged.
 
 The expected Roblox hierarchy should look like this:
@@ -351,7 +438,11 @@ ReplicatedStorage
     ├── LieGroupKinematics
     ├── SpectralLinearAlgebra
     ├── BayesianStateEstimation
-    └── DifferentialPathGeometry
+    ├── DifferentialPathGeometry
+    ├── AutomaticDifferentiation
+    ├── RigidBodyDynamics
+    ├── NumericalOptimization
+    └── TrajectoryPlanning
 ```
 
 ### Rojo Installation
@@ -388,6 +479,10 @@ local LinearAlgebra = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
 local StateEstimation = require(VectorForge:WaitForChild("BayesianStateEstimation"))
 
 local PathGeometry = require(VectorForge:WaitForChild("DifferentialPathGeometry"))
+local AutomaticDifferentiation = require(VectorForge:WaitForChild("AutomaticDifferentiation"))
+local RigidBodyDynamics = require(VectorForge:WaitForChild("RigidBodyDynamics"))
+local NumericalOptimization = require(VectorForge:WaitForChild("NumericalOptimization"))
+local TrajectoryPlanning = require(VectorForge:WaitForChild("TrajectoryPlanning"))
 ```
 
 Each module can then be used according to its exposed API.
@@ -408,6 +503,7 @@ The `examples/` directory contains standalone demonstrations designed to illustr
 | Differential Path | Demonstrates curve sampling and movement along a geometric path |
 | Bayesian Motion Tracking | Demonstrates estimation using noisy position observations |
 | Least-Squares Regression | Demonstrates polynomial fitting using numerical linear algebra |
+| Integration Demo | Demonstrates interactions across the expanded VectorForge module set |
 
 Each example is intended to be independently understandable and can be used as a starting point for further experimentation.
 
@@ -417,7 +513,7 @@ See [examples/README.md](examples/README.md) for setup instructions.
 
 ## Testing
 
-VectorForge includes an initial test suite designed to validate important mathematical operations.
+VectorForge includes regression and comprehensive test scripts designed to exercise important mathematical operations across its expanded module set.
 
 The test runner checks several areas, including:
 
@@ -430,6 +526,8 @@ The test runner checks several areas, including:
 - Curve evaluation and differential properties.
 - Arc-length calculations.
 - Trajectory boundary conditions.
+- Automatic differentiation and numerical optimization checks.
+- Rigid-body dynamics and trajectory-planning checks.
 
 ### Running the Tests
 
@@ -532,9 +630,5 @@ VectorForge is an ongoing experimental project exploring how advanced computatio
 It is not intended to be presented as a finished framework or a complete replacement for specialized numerical software.
 
 The purpose of sharing this project is to document the work, experiment with mathematical implementations, explore possible applications, and make its development accessible to other developers interested in the same field.
-## Credits
-
-- Creator: Bighnika Akene
-- Discord: towlerblio
 
 **The project is still a work in progress, and there is considerably more to explore.**

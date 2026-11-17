@@ -9,6 +9,13 @@ This project follows a simplified changelog structure inspired by Keep a Changel
 Changes currently under development and not yet associated with a published version.
 
 ### Added
+- `AutomaticDifferentiation` — experimental automatic differentiation utilities.
+- `RigidBodyDynamics` — rigid-body motion and dynamics calculations.
+- `NumericalOptimization` — numerical optimization methods.
+- `TrajectoryPlanning` — trajectory construction and planning utilities.
+- Expanded mathematical and API documentation for the eight-module architecture.
+- A comprehensive test runner covering robotics, dynamics, estimation, numerical mathematics, and differential geometry.
+- An integrated demonstration for the expanded module set.
 - Initial API documentation covering the core mathematical modules.
 - Architecture documentation describing module responsibilities and system organization.
 - Mathematical documentation covering the theoretical foundations of implemented algorithms.
@@ -28,6 +35,7 @@ Changes currently under development and not yet associated with a published vers
 - Established initial repository organization and development guidelines.
 
 ### Development Status
+- The expanded library currently contains eight mathematical modules.
 - Core mathematical implementations remain under development.
 - Public APIs are subject to change.
 - Numerical stability and edge-case validation require further investigation.

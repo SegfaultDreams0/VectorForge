@@ -14,10 +14,14 @@ The purpose of this document is to explain the mathematical principles behind th
 - [2. Numerical Linear Algebra](#2-numerical-linear-algebra)
 - [3. Bayesian State Estimation](#3-bayesian-state-estimation)
 - [4. Differential Path Geometry](#4-differential-path-geometry)
-- [5. Numerical Analysis and Stability](#5-numerical-analysis-and-stability)
-- [6. Relationship Between Mathematical Domains](#6-relationship-between-mathematical-domains)
-- [7. Applications in Roblox](#7-applications-in-roblox)
-- [8. Mathematical Limitations](#8-mathematical-limitations)
+- [5. Automatic Differentiation](#5-automatic-differentiation)
+- [6. Rigid-Body Dynamics](#6-rigid-body-dynamics)
+- [7. Numerical Optimization](#7-numerical-optimization)
+- [8. Trajectory Planning](#8-trajectory-planning)
+- [9. Numerical Analysis and Stability](#9-numerical-analysis-and-stability)
+- [10. Relationship Between Mathematical Domains](#10-relationship-between-mathematical-domains)
+- [11. Applications in Roblox](#11-applications-in-roblox)
+- [12. Mathematical Limitations](#12-mathematical-limitations)
 
 ---
 
@@ -694,7 +698,147 @@ It is useful in smooth trajectory generation and movement interpolation.
 
 ---
 
-## 5. Numerical Analysis and Stability
+## 5. Automatic Differentiation
+
+**Related Module:** `AutomaticDifferentiation`
+
+Automatic differentiation computes derivatives by applying the chain rule systematically to the elementary operations that form a computational expression. It differs from finite differences, which estimate derivatives through nearby function evaluations, and from symbolic differentiation, which manipulates algebraic expressions.
+
+### 5.1 Forward-Mode Differentiation
+
+A scalar intermediate value can be paired with its derivative with respect to an input:
+
+\[
+(a,\dot a)
+\]
+
+For an operation \(c=a+b\):
+
+\[
+c=a+b,\qquad \dot c=\dot a+\dot b
+\]
+
+For a product \(c=ab\):
+
+\[
+\dot c=\dot a b+a\dot b
+\]
+
+For a composition \(c=f(a)\):
+
+\[
+\dot c=f'(a)\dot a
+\]
+
+These rules allow derivative information to propagate through a sequence of supported operations.
+
+### 5.2 Practical Considerations
+
+Automatic differentiation is exact up to floating-point rounding for the operations and derivative rules implemented. It does not automatically guarantee that every Luau function or data type is differentiable or supported. The module's actual operation coverage and input conventions must be checked against its implementation.
+
+**Potential applications:** sensitivity analysis, gradient-based optimization, parameter fitting, and numerical experimentation.
+
+## 6. Rigid-Body Dynamics
+
+**Related Module:** `RigidBodyDynamics`
+
+Rigid-body dynamics studies how forces and torques influence the translational and rotational motion of a body.
+
+### 6.1 Translational Dynamics
+
+Newton's second law relates net force to linear acceleration:
+
+\[
+\mathbf{F}=m\mathbf{a}
+\]
+
+Where \(m\) is mass and \(\mathbf{a}\) is linear acceleration.
+
+### 6.2 Rotational Dynamics
+
+Angular motion is influenced by torque and the body's inertia. In a general body-fixed formulation, rotational dynamics involve angular velocity, angular momentum, and the inertia tensor. A simplified relationship for rotation about a fixed principal axis is:
+
+\[
+	au=Ilpha
+\]
+
+Where \(	au\) is torque, \(I\) is the relevant moment of inertia, and \(lpha\) is angular acceleration.
+
+### 6.3 Rigid-Body State
+
+A rigid-body model may track position, orientation, linear velocity, and angular velocity. The exact state representation and numerical integration approach are implementation-specific.
+
+**Potential applications:** mechanical simulation, robotics experiments, and motion modeling.
+
+## 7. Numerical Optimization
+
+**Related Module:** `NumericalOptimization`
+
+Numerical optimization seeks parameters that minimize or maximize an objective function.
+
+### 7.1 Objective Functions
+
+A minimization problem can be written as:
+
+\[
+\min_{\mathbf{x}} f(\mathbf{x})
+\]
+
+Where \(f\) is an objective function and \(\mathbf{x}\) is a parameter vector.
+
+### 7.2 Gradient-Based Updates
+
+A basic gradient-descent update is:
+
+\[
+\mathbf{x}_{k+1}=\mathbf{x}_k-\eta
+abla f(\mathbf{x}_k)
+\]
+
+Where \(\eta\) is a step size and \(
+abla f\) is the gradient.
+
+The choice of step size, stopping criteria, conditioning, and objective landscape affects convergence. This equation illustrates a general optimization method; it does not assert that a particular optimizer is implemented by VectorForge.
+
+### 7.3 Convergence and Validation
+
+Optimization results should be assessed using objective values, gradient norms where available, iteration limits, and problem-specific constraints. A numerical result is not necessarily a global optimum.
+
+**Potential applications:** parameter estimation, calibration, curve fitting, and numerical modeling.
+
+## 8. Trajectory Planning
+
+**Related Module:** `TrajectoryPlanning`
+
+Trajectory planning constructs a time- or parameter-dependent description of motion between states or spatial targets.
+
+### 8.1 Time-Parameterized Motion
+
+A trajectory can be represented abstractly as:
+
+\[
+\mathbf{q}(t)
+\]
+
+Its derivatives describe velocity and acceleration:
+
+\[
+\dot{\mathbf{q}}(t),\qquad \ddot{\mathbf{q}}(t)
+\]
+
+For spatial motion, the representation may include position and orientation, depending on the planning model.
+
+### 8.2 Boundary Conditions
+
+A planning problem may specify initial and final positions, and may additionally constrain endpoint velocities or accelerations. These conditions influence the selected trajectory family and its smoothness.
+
+### 8.3 Relationship to Path Geometry
+
+A geometric path describes where motion travels, while a time parameterization describes how that path is traversed over time. The two concepts can be combined, but they are not interchangeable.
+
+**Potential applications:** NPC movement, robotic motion experiments, camera motion, and procedural animation.
+
+## 9. Numerical Analysis and Stability
 
 Numerical analysis studies how mathematical problems can be approximated and solved using computational methods.
 
@@ -752,7 +896,7 @@ The approximation quality depends on the integration method, sampling strategy, 
 
 ---
 
-## 6. Relationship Between Mathematical Domains
+## 10. Relationship Between Mathematical Domains
 
 The four mathematical modules address different problems, but their mathematical responsibilities can complement one another.
 
@@ -774,7 +918,7 @@ This is an illustrative system design, not a built-in integrated feature of Vect
 
 ---
 
-## 7. Applications in Roblox
+## 11. Applications in Roblox
 
 The mathematical concepts explored by VectorForge can be applied to several areas of Roblox development.
 
@@ -802,7 +946,7 @@ These applications are intended as possibilities for experimentation rather than
 
 ---
 
-## 8. Mathematical Limitations
+## 12. Mathematical Limitations
 
 Mathematical algorithms are subject to assumptions and numerical constraints.
 

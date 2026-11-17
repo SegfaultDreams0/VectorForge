@@ -9,30 +9,70 @@ This project follows a simplified changelog structure inspired by Keep a Changel
 Changes currently under development and not yet associated with a published version.
 
 ### Added
+
+#### Core Modules
 - `AutomaticDifferentiation` — experimental automatic differentiation utilities.
 - `RigidBodyDynamics` — rigid-body motion and dynamics calculations.
 - `NumericalOptimization` — numerical optimization methods.
 - `TrajectoryPlanning` — trajectory construction and planning utilities.
-- Expanded mathematical and API documentation for the eight-module architecture.
+
+#### Testing and Demonstrations
 - A comprehensive test runner covering robotics, dynamics, estimation, numerical mathematics, and differential geometry.
 - An integrated demonstration for the expanded module set.
-- Initial API documentation covering the core mathematical modules.
-- Architecture documentation describing module responsibilities and system organization.
-- Mathematical documentation covering the theoretical foundations of implemented algorithms.
-- Practical Roblox demonstrations for:
-  - Rigid-body pose interpolation.
-  - Differential path geometry.
-  - Bayesian motion tracking.
-  - Least-squares polynomial regression.
-- Initial deterministic regression test suite.
-- Rojo project configuration for automated Roblox project mapping.
-- Repository documentation and contribution guidelines.
+- Additional experimental laboratories for mathematical visualization and numerical exploration.
 
-### Documentation
+#### Benchmarks
+- Added a dedicated `benchmarks/` directory for performance measurement and algorithm evaluation.
+- Added `BenchmarkUtils.lua` for timing, repeated measurements, and benchmark reporting.
+- Added benchmark templates for:
+  - Matrix operations and numerical linear algebra.
+  - Numerical optimization workloads.
+  - Differential geometry computations.
+  - Bayesian state estimation workloads.
+
+#### Experiments
+- Added a dedicated `experiments/` directory for experimental mathematical demonstrations.
+- Added `CelestialMechanics.server.lua` for simplified orbital and celestial visualization.
+- Added `OrbitalSimulation.server.lua` for a basic Newtonian orbital simulation.
+- Added `KalmanVisualization.server.lua` for visualizing noisy observations and estimated positions.
+- Added `TrajectoryLaboratory.server.lua` for parametric path visualization.
+- Added `NumericalStabilityLab.server.lua` for exploring floating-point accumulation errors.
+
+#### Research
+- Added a dedicated `research/` directory for mathematical notes and future development investigations.
+- Added `LieGroupNotes.md` covering rotation groups, quaternions, and rigid transformations.
+- Added `NumericalMethods.md` covering numerical errors, conditioning, and computational stability.
+- Added `StateEstimationNotes.md` covering probabilistic state estimation and filter design.
+- Added `FutureAlgorithms.md` documenting potential algorithms and future research directions.
+
+#### Documentation
+- Expanded mathematical and API documentation for the eight-module architecture.
+- Added `NUMERICAL_VALIDATION.md` describing numerical validation strategies, residual checks, mathematical invariants, and tolerance selection.
+- Added `BENCHMARKING.md` documenting benchmark methodology, measurement procedures, and reproducibility.
+- Added `DESIGN_DECISIONS.md` recording architectural principles and development decisions.
+- Added `GLOSSARY.md` defining mathematical and numerical terminology used throughout VectorForge.
 - Added installation instructions for manual Roblox Studio setup.
 - Added module descriptions and potential application scenarios.
 - Documented mathematical concepts and numerical considerations.
 - Established initial repository organization and development guidelines.
+
+#### Initial Project Infrastructure
+- Added initial API documentation covering the core mathematical modules.
+- Added architecture documentation describing module responsibilities and system organization.
+- Added mathematical documentation covering the theoretical foundations of implemented algorithms.
+- Added practical Roblox demonstrations for:
+  - Rigid-body pose interpolation.
+  - Differential path geometry.
+  - Bayesian motion tracking.
+  - Least-squares polynomial regression.
+- Added an initial deterministic regression test suite.
+- Added Rojo project configuration for automated Roblox project mapping.
+- Added repository documentation and contribution guidelines.
+
+### Changed
+- Expanded the documented module architecture from four to eight mathematical modules.
+- Extended the documented project structure to include benchmarks, experiments, research notes, and additional technical documentation.
+- Expanded testing and development documentation to cover the additional mathematical domains.
 
 ### Development Status
 - The expanded library currently contains eight mathematical modules.
@@ -40,7 +80,9 @@ Changes currently under development and not yet associated with a published vers
 - Public APIs are subject to change.
 - Numerical stability and edge-case validation require further investigation.
 - Runtime performance has not been comprehensively benchmarked.
-- Additional examples, tests, and documentation are planned.
+- Benchmark scripts currently provide workload adapters that must be connected to verified module APIs.
+- Experimental demonstrations are intended for exploration and visualization, not as validated physical or numerical simulations.
+- Additional examples, tests, benchmarks, and documentation are planned.
 
 ---
 

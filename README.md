@@ -1,484 +1,51 @@
+ <div align="center">
+
 # VectorForge
 
 ### Advanced Computational Mathematics for Roblox Luau
 
-VectorForge is an experimental computational mathematics library designed to bring advanced numerical methods, geometric computation, and mathematical modeling into the Roblox development environment.
+**Explore numerical methods, geometric computation, and mathematical systems directly inside Roblox.**
 
-Rather than focusing on conventional gameplay utilities or general-purpose scripting abstractions, VectorForge explores the implementation of mathematical techniques commonly associated with computational geometry, numerical analysis, robotics, signal processing, and state estimation.
+VectorForge is an experimental Luau library exploring the implementation of advanced computational mathematics, including Lie group kinematics, numerical linear algebra, Bayesian state estimation, differential geometry, and more.
 
-The project aims to provide a modular foundation for developers interested in building mathematically driven systems, conducting numerical experiments, and exploring complex computational techniques directly within Roblox Luau.
+[![Language](https://img.shields.io/badge/Language-Luau-blue?style=flat-square)](https://luau.org/)
+[![Platform](https://img.shields.io/badge/Platform-Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://www.roblox.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-Experimental-orange?style=flat-square)](#project-status)
 
-**Project Status:** Work in Progress — Experimental Development
+**[Quick Start](#quick-start) · [Modules](#core-modules) · [Examples](#examples) · [Experiments](#experiments) · [Documentation](#documentation)**
 
-VectorForge is an incomplete research-oriented project. Its implementation, API, numerical stability, performance characteristics, and documentation are still evolving. It is currently shared to demonstrate ongoing development, explore potential applications, and encourage technical discussion and community contributions.
-
----
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Core Modules](#core-modules)
-  - [LieGroupKinematics](#1-liegrouplinematics)
-  - [SpectralLinearAlgebra](#2-spectrallinearalgebra)
-  - [BayesianStateEstimation](#3-bayesianstateestimation)
-  - [DifferentialPathGeometry](#4-differentialpathgeometry)
-  - [AutomaticDifferentiation](#5-automaticdifferentiation)
-  - [RigidBodyDynamics](#6-rigidbodydynamics)
-  - [NumericalOptimization](#7-numericaloptimization)
-  - [TrajectoryPlanning](#8-trajectoryplanning)
-- [Mathematical Foundations](#mathematical-foundations)
-- [Potential Applications](#potential-applications)
-- [Architecture](#architecture)
-- [Repository Structure](#repository-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Examples](#examples)
-- [Experiments](#experiments)
-- [Benchmarking](#benchmarking)
-- [Research Notes](#research-notes)
-- [Testing](#testing)
-- [Performance Considerations](#performance-considerations)
-- [Limitations](#limitations)
-- [Development Roadmap](#development-roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+</div>
 
 ---
 
 ## Overview
 
-VectorForge is organized around eight mathematical modules, each addressing a different area of computational mathematics.
+Roblox provides a convenient environment for building interactive experiences, but some mathematical problems require more specialized numerical techniques.
 
-The objective is to separate mathematical functionality into reusable components rather than implementing complex algorithms directly inside individual game scripts.
+VectorForge explores how these techniques can be implemented in Luau through a collection of independent mathematical modules.
 
-The library currently explores the following areas:
+The project covers concepts commonly found in numerical analysis, robotics, computational geometry, classical mechanics, probability, and optimization.
 
-| Module | Mathematical Domain | Primary Focus |
-|---|---|---|
-| LieGroupKinematics | Lie Groups and Robotics Mathematics | Rotations and rigid-body transformations |
-| SpectralLinearAlgebra | Numerical Linear Algebra | Matrix operations and numerical solvers |
-| BayesianStateEstimation | Probability and State Estimation | Prediction, uncertainty, and measurement filtering |
-| DifferentialPathGeometry | Differential Geometry | Curves, curvature, torsion, and trajectories |
-| AutomaticDifferentiation | Numerical Differentiation | Derivative propagation through computational expressions |
-| RigidBodyDynamics | Classical Mechanics | Rigid-body motion, forces, and dynamics |
-| NumericalOptimization | Mathematical Optimization | Numerical methods for minimizing objective functions |
-| TrajectoryPlanning | Motion Planning | Construction and evaluation of planned trajectories |
+Rather than attempting to replace Roblox's built-in APIs, VectorForge focuses on mathematical operations that extend beyond conventional gameplay scripting.
 
-Each module has a distinct responsibility and is intended to operate independently where practical.
+**The goal is to make advanced mathematical techniques accessible, reusable, and open to experimentation within Roblox.**
 
-## Core Modules
+## Quick Start
 
-### 1. LieGroupKinematics
+### Installation
 
-**Domain:** Lie Groups, Rotation Theory, and Rigid-Body Kinematics.
+You can install VectorForge manually or use the included Rojo project configuration.
 
-LieGroupKinematics focuses on the mathematical representation and manipulation of rotations and rigid transformations in three-dimensional space.
-
-Instead of relying exclusively on conventional transformation interpolation, the module explores quaternion mathematics and Lie-group operations for representing orientation and spatial motion.
-
-Its mathematical foundations include:
-
-- Quaternion algebra and rotation representations.
-- SO(3) rotation group operations.
-- SE(3) rigid-body transformations.
-- Exponential and logarithmic maps.
-- Spherical Linear Interpolation (SLERP).
-- Pose composition and inversion.
-- Twist representations and spatial transformations.
-
-**Potential applications:**
-
-- Smooth camera orientation systems.
-- Advanced object transformation.
-- Robotics-inspired movement systems.
-- Procedural animation.
-- Three-dimensional pose interpolation.
-- Spatial simulation and kinematics.
-
-The goal is to make advanced spatial mathematics reusable without requiring each application to implement its own rotation and transformation algorithms.
-
-### 2. SpectralLinearAlgebra
-
-**Domain:** Numerical Linear Algebra and Matrix Computation.
-
-SpectralLinearAlgebra explores numerical methods for manipulating matrices, solving linear systems, and performing mathematical decompositions.
-
-Linear algebra is a fundamental component of many computational systems, including optimization, physics simulation, machine learning, and numerical modeling.
-
-The module is intended to provide reusable implementations of operations such as:
-
-- Matrix multiplication and transposition.
-- LU decomposition.
-- Determinant computation.
-- Cholesky decomposition.
-- Householder QR decomposition.
-- Symmetric eigenvalue approximation.
-- Conjugate Gradient optimization.
-- Least-squares estimation.
-- Linear-system solving.
-
-**Potential applications:**
-
-- Mathematical optimization.
-- Numerical simulation.
-- Polynomial regression.
-- Parameter estimation.
-- Procedural mathematical modeling.
-- Foundations for more advanced computational algorithms.
-
-The module aims to provide a reusable numerical foundation for other VectorForge components and independent mathematical applications.
-
-### 3. BayesianStateEstimation
-
-**Domain:** Bayesian Inference, Probability, and Dynamic State Estimation.
-
-BayesianStateEstimation explores techniques for estimating the internal state of a dynamic system when observations are incomplete or affected by uncertainty.
-
-Real-world measurements are rarely perfect. A position measurement, for example, may contain noise or inaccuracies.
-
-State estimation techniques combine mathematical models with observed measurements to produce more consistent estimates of a system's behaviour.
-
-The module explores concepts including:
-
-- Extended Kalman Filtering (EKF).
-- State-transition models.
-- Measurement models.
-- Covariance propagation.
-- Numerical Jacobian approximation.
-- Measurement correction.
-- Innovation calculation.
-- Statistical measurement gating.
-
-**Potential applications:**
-
-- Noisy object-position tracking.
-- Motion prediction.
-- Sensor simulation.
-- Trajectory estimation.
-- Autonomous movement experiments.
-- Dynamic system modeling.
-
-One possible application is tracking an object whose measured position changes unpredictably. Instead of treating every observation as perfectly accurate, a state estimator combines previous estimates, predicted motion, and new measurements.
-
-This provides a mathematical approach to handling uncertainty in dynamic environments.
-
-### 4. DifferentialPathGeometry
-
-**Domain:** Differential Geometry and Curve Analysis.
-
-DifferentialPathGeometry focuses on the mathematical analysis of parameterized curves and their geometric properties.
-
-Rather than treating a path as a simple collection of positions, differential geometry allows a path to be studied through its derivatives, curvature, torsion, and local coordinate frames.
-
-The module explores:
-
-- Hermite curve interpolation.
-- First and higher-order derivatives.
-- Curvature computation.
-- Torsion computation.
-- Numerical arc-length integration.
-- Arc-length parameterization.
-- Frenet frames.
-- Parallel-transport frames.
-- Closest-point estimation.
-- Minimum-jerk trajectory generation.
-
-**Potential applications:**
-
-- Procedural path generation.
-- Smooth NPC trajectories.
-- Camera rail systems.
-- Vehicle trajectory modeling.
-- Advanced animation.
-- Three-dimensional movement analysis.
-- Geometric simulation.
-
-For example, an object moving along a curved trajectory can use arc-length parameterization to maintain approximately constant movement speed, rather than moving at a speed determined by the curve's parameterization.
-
-Parallel-transport frames can also help maintain smoother orientation along complex three-dimensional paths.
-
-### 5. AutomaticDifferentiation
-
-**Domain:** Automatic Differentiation and Numerical Calculus.
-
-AutomaticDifferentiation explores methods for computing derivatives by propagating derivative information through arithmetic operations and supported computational expressions.
-
-Its intended mathematical scope includes:
-
-- Forward-mode derivative propagation.
-- Computational expression evaluation with derivative tracking.
-- Derivatives of supported scalar and vector-valued expressions.
-- Sensitivity analysis for numerical models.
-
-**Potential applications:**
-
-- Gradient-based optimization.
-- Sensitivity analysis.
-- Parameter fitting.
-- Differentiable mathematical experiments.
-
-### 6. RigidBodyDynamics
-
-**Domain:** Classical Mechanics and Rigid-Body Dynamics.
-
-RigidBodyDynamics focuses on the motion of rigid bodies under applied forces, torques, and inertial properties.
-
-Its intended mathematical scope includes:
-
-- Linear and angular motion.
-- Mass and inertia representations.
-- Force and torque relationships.
-- Rigid-body state evolution.
-- Translational and rotational dynamics.
-
-**Potential applications:**
-
-- Physics experiments.
-- Robotics-inspired simulation.
-- Mechanical system modeling.
-- Motion analysis.
-
-### 7. NumericalOptimization
-
-**Domain:** Numerical Optimization and Iterative Minimization.
-
-NumericalOptimization explores numerical techniques for finding solutions that minimize objective functions subject to supported assumptions and constraints.
-
-Its intended mathematical scope includes:
-
-- Objective-function evaluation.
-- Iterative parameter updates.
-- Gradient-based optimization concepts.
-- Convergence and stopping criteria.
-- Numerical minimization.
-
-**Potential applications:**
-
-- Parameter estimation.
-- Curve fitting.
-- Mathematical calibration.
-- Optimization experiments.
-
-### 8. TrajectoryPlanning
-
-**Domain:** Motion Planning and Trajectory Generation.
-
-TrajectoryPlanning focuses on constructing and evaluating paths or time-dependent motion profiles between states or spatial targets.
-
-Its intended mathematical scope includes:
-
-- Trajectory construction.
-- Motion-profile evaluation.
-- Boundary-condition handling.
-- Smooth movement planning.
-- Integration with geometric and kinematic representations.
-
-**Potential applications:**
-
-- NPC movement.
-- Robotics-inspired path planning.
-- Camera and object motion.
-- Procedural animation.
-
----
-
-## Mathematical Foundations
-
-VectorForge explores several mathematical disciplines that complement one another.
-
-| Mathematical Area | Concepts |
-|---|---|
-| Linear Algebra | Matrix operations, decompositions, eigenvalues |
-| Differential Geometry | Curvature, torsion, tangent and normal frames |
-| Lie Theory | SO(3), SE(3), exponential and logarithmic maps |
-| Numerical Analysis | Approximation, integration, iterative solvers |
-| Probability Theory | Bayesian estimation and uncertainty |
-| Optimization | Least-squares estimation and iterative minimization |
-| Signal Processing | Frequency-domain analysis and numerical transforms |
-
-These disciplines form the theoretical foundation of the library.
-
-For additional mathematical explanations, see [MATHEMATICS.md](docs/MATHEMATICS.md).
-
----
-
-## Potential Applications
-
-VectorForge is not limited to a particular type of Roblox experience.
-
-Its mathematical components may be useful in projects where conventional gameplay scripting is insufficient or where more sophisticated mathematical modeling is desirable.
-
-Some possible applications include:
-
-**Physics and Simulation**
-
-Numerical solvers, transformations, and mathematical modeling can support experimental physics and simulation systems.
-
-**Procedural Animation**
-
-Quaternion interpolation, trajectory generation, and differential geometry can be used to explore more sophisticated animation techniques.
-
-**Artificial Intelligence Experiments**
-
-State estimation, prediction, and mathematical optimization can provide foundations for experimental intelligent systems.
-
-**Robotics-Inspired Systems**
-
-Rigid-body transformations, spatial coordinates, and kinematic calculations can be applied to robotic movement simulations.
-
-**Computational Geometry**
-
-Curve analysis, geometric transformations, and coordinate-frame calculations can support advanced procedural environments.
-
-These are potential applications rather than claims that VectorForge already implements complete systems for each domain.
-
----
-
-## Architecture
-
-VectorForge follows a modular architecture in which each mathematical component is maintained independently.
-
-```text
-                         Roblox Experience
-                                |
-                                v
-                            VectorForge
-                                |
-       +------------------------+------------------------+
-       |                        |                        |
-       v                        v                        v
- LieGroupKinematics    SpectralLinearAlgebra    BayesianStateEstimation
-       |                        |                        |
-       v                        v                        v
- Spatial Mathematics    Numerical Computation     State Estimation
-
-       +------------------------+------------------------+
-       |                        |                        |
-       v                        v                        v
-DifferentialPathGeometry  AutomaticDifferentiation  RigidBodyDynamics
-       |                        |                        |
-       v                        v                        v
- Curve Computation       Derivative Analysis       Physical Dynamics
-
-       +------------------------+------------------------+
-       |                        |
-       v                        v
-NumericalOptimization   TrajectoryPlanning
-       |                        |
-       v                        v
- Optimization Methods    Motion Planning
-```
-
-The architecture is intended to provide:
-
-- Separation of mathematical responsibilities.
-- Reusable computational components.
-- Independent module development.
-- Clear interfaces between mathematical systems.
-- Easier testing and future expansion.
-
-For more information, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
-
----
-
-## Repository Structure
-
-```text
-VectorForge/
-│
-├── benchmarks/
-│   ├── README.md
-│   ├── BenchmarkUtils.lua
-│   ├── MatrixBenchmarks.server.lua
-│   ├── OptimizationBenchmarks.server.lua
-│   ├── GeometryBenchmarks.server.lua
-│   └── StateEstimationBenchmarks.server.lua
-│
-├── docs/
-│   ├── API.md
-│   ├── ARCHITECTURE.md
-│   ├── MATHEMATICS.md
-│   ├── NUMERICAL_VALIDATION.md
-│   ├── BENCHMARKING.md
-│   ├── DESIGN_DECISIONS.md
-│   └── GLOSSARY.md
-│
-├── examples/
-│   └── server/
-│       ├── README.md
-│       ├── PoseInterpolation.lua
-│       ├── DifferentialPath.lua
-│       ├── IntegrationDemo.lua
-│       ├── BayesianMotionTracking.lua
-│       └── LeastSquaresRegression.lua
-│
-├── experiments/
-│   ├── README.md
-│   ├── CelestialMechanics.server.lua
-│   ├── OrbitalSimulation.server.lua
-│   ├── KalmanVisualization.server.lua
-│   ├── TrajectoryLaboratory.server.lua
-│   └── NumericalStabilityLab.server.lua
-│
-├── research/
-│   ├── README.md
-│   ├── LieGroupNotes.md
-│   ├── NumericalMethods.md
-│   ├── StateEstimationNotes.md
-│   └── FutureAlgorithms.md
-│
-├── src/
-│   └── VectorForge/
-│       ├── LieGroupKinematics
-│       ├── SpectralLinearAlgebra
-│       ├── BayesianStateEstimation
-│       ├── DifferentialPathGeometry
-│       ├── AutomaticDifferentiation
-│       ├── RigidBodyDynamics
-│       ├── NumericalOptimization
-│       └── TrajectoryPlanning
-│
-├── tests/
-│   ├── README.md
-│   ├── ComprehensiveTester.lua
-│   ├── SmallTaster.lua
-│   └── VectorForgeIntegrationTest.lua
-│
-├── .gitignore
-├── CHANGELOG.md
-├── CONTRIBUTING.md
-├── default.project.json
-├── LICENSE
-├── package.json
-├── package-lock.json
-└── README.md
-```
-
-### Directory Responsibilities
-
-| Directory | Description |
-|---|---|
-| `src/` | Core mathematical implementations |
-| `docs/` | Technical documentation, mathematical explanations, and design references |
-| `examples/` | Practical demonstrations and usage scenarios |
-| `tests/` | Regression tests and mathematical validation |
-| `benchmarks/` | Workload-based performance measurement scripts |
-| `experiments/` | Experimental visualizations and numerical demonstrations |
-| `research/` | Mathematical notes, algorithm research, and future development ideas |
-
----
-
-## Installation
-
-### Manual Installation
+**Manual installation**
 
 1. Open Roblox Studio.
 2. Navigate to `ReplicatedStorage`.
 3. Create a folder named `VectorForge`.
-4. Copy the eight ModuleScripts from `src/VectorForge/` into the folder.
-5. Ensure that the ModuleScript names remain unchanged.
+4. Copy the ModuleScripts from `src/VectorForge/` into that folder.
+5. Keep the original ModuleScript names.
 
-The expected Roblox hierarchy should look like this:
+Your Explorer hierarchy should look like this:
 
 ```text
 ReplicatedStorage
@@ -493,128 +60,381 @@ ReplicatedStorage
     └── TrajectoryPlanning
 ```
 
-### Rojo Installation
+### Rojo
 
 VectorForge includes a Rojo project configuration.
 
 Make sure `default.project.json` maps `src/VectorForge` to `ReplicatedStorage/VectorForge`.
 
-Build the project using:
+Build the project:
 
 ```bash
 rojo build default.project.json -o VectorForge.rbxlx
 ```
 
-For more information about Rojo, visit:
+[Rojo documentation](https://rojo.space/)
 
-https://rojo.space/
+### Basic usage
 
----
-
-## Usage
-
-After installing the modules, they can be accessed through Roblox's `require()` functionality.
+After installation, load the modules using Roblox's `require()` function.
 
 ```lua
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
 
-local Lie = require(VectorForge:WaitForChild("LieGroupKinematics"))
+local Lie = require(VectorForge.LieGroupKinematics)
+local LinearAlgebra = require(VectorForge.SpectralLinearAlgebra)
+local StateEstimation = require(VectorForge.BayesianStateEstimation)
+local PathGeometry = require(VectorForge.DifferentialPathGeometry)
 
-local LinearAlgebra = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+local AutomaticDifferentiation =
+    require(VectorForge.AutomaticDifferentiation)
 
-local StateEstimation = require(VectorForge:WaitForChild("BayesianStateEstimation"))
+local RigidBodyDynamics =
+    require(VectorForge.RigidBodyDynamics)
 
-local PathGeometry = require(VectorForge:WaitForChild("DifferentialPathGeometry"))
+local NumericalOptimization =
+    require(VectorForge.NumericalOptimization)
 
-local AutomaticDifferentiation = require(VectorForge:WaitForChild("AutomaticDifferentiation"))
-
-local RigidBodyDynamics = require(VectorForge:WaitForChild("RigidBodyDynamics"))
-
-local NumericalOptimization = require(VectorForge:WaitForChild("NumericalOptimization"))
-
-local TrajectoryPlanning = require(VectorForge:WaitForChild("TrajectoryPlanning"))
+local TrajectoryPlanning =
+    require(VectorForge.TrajectoryPlanning)
 ```
 
-Each module can then be used according to its exposed API.
+Each module exposes its own functionality. Refer to the [API Reference](docs/API.md) for available operations, parameters, and return values.
 
-For available operations, constructor signatures, and return values, consult:
+---
 
-[API Reference](docs/API.md)
+## Core Modules
+
+VectorForge currently explores eight mathematical domains.
+
+| Module | Mathematical Domain | Main Focus |
+|---|---|---|
+| `LieGroupKinematics` | Lie Theory | Rotations and rigid transformations |
+| `SpectralLinearAlgebra` | Linear Algebra | Matrix operations and numerical solvers |
+| `BayesianStateEstimation` | Probability | State estimation and uncertainty |
+| `DifferentialPathGeometry` | Differential Geometry | Curves, curvature, and path analysis |
+| `AutomaticDifferentiation` | Numerical Calculus | Derivative propagation |
+| `RigidBodyDynamics` | Classical Mechanics | Forces, torques, and rigid-body motion |
+| `NumericalOptimization` | Optimization | Numerical minimization |
+| `TrajectoryPlanning` | Motion Planning | Trajectory construction and evaluation |
+
+### 1. LieGroupKinematics
+
+**Lie Groups · Rotation Theory · Rigid-Body Kinematics**
+
+Mathematical representations for rotations and rigid transformations in three-dimensional space.
+
+Concepts explored:
+
+- Quaternion algebra.
+- SO(3) rotation operations.
+- SE(3) rigid-body transformations.
+- Exponential and logarithmic maps.
+- Spherical Linear Interpolation (SLERP).
+- Pose composition and inversion.
+- Twist representations.
+
+**Possible applications**
+
+- Procedural animation.
+- Smooth camera orientation.
+- Robotics-inspired movement.
+- Three-dimensional pose interpolation.
+- Spatial simulation.
+
+### 2. SpectralLinearAlgebra
+
+**Numerical Linear Algebra · Matrix Computation**
+
+Numerical methods for manipulating matrices, solving linear systems, and performing mathematical decompositions.
+
+Concepts explored:
+
+- Matrix multiplication and transposition.
+- LU decomposition.
+- Determinant computation.
+- Cholesky decomposition.
+- Householder QR decomposition.
+- Symmetric eigenvalue approximation.
+- Conjugate Gradient methods.
+- Least-squares estimation.
+- Linear-system solving.
+
+**Possible applications**
+
+- Numerical simulation.
+- Polynomial regression.
+- Parameter estimation.
+- Mathematical optimization.
+- Computational modeling.
+
+### 3. BayesianStateEstimation
+
+**Bayesian Inference · Probability · State Estimation**
+
+Methods for estimating the internal state of a dynamic system when observations are incomplete or affected by uncertainty.
+
+Concepts explored:
+
+- Extended Kalman Filtering (EKF).
+- State-transition models.
+- Measurement models.
+- Covariance propagation.
+- Numerical Jacobian approximation.
+- Measurement correction.
+- Innovation calculation.
+- Statistical measurement gating.
+
+**Possible applications**
+
+- Noisy object-position tracking.
+- Motion prediction.
+- Sensor simulation.
+- Trajectory estimation.
+- Dynamic system modeling.
+
+### 4. DifferentialPathGeometry
+
+**Differential Geometry · Curve Analysis**
+
+Mathematical analysis of parameterized curves and their geometric properties.
+
+Concepts explored:
+
+- Hermite curve interpolation.
+- First and higher-order derivatives.
+- Curvature and torsion.
+- Numerical arc-length integration.
+- Arc-length parameterization.
+- Frenet frames.
+- Parallel-transport frames.
+- Closest-point estimation.
+- Minimum-jerk trajectory generation.
+
+**Possible applications**
+
+- Procedural path generation.
+- Smooth NPC trajectories.
+- Camera rail systems.
+- Vehicle trajectory modeling.
+- Three-dimensional movement analysis.
+
+### 5. AutomaticDifferentiation
+
+**Automatic Differentiation · Numerical Calculus**
+
+Explores derivative computation by propagating derivative information through arithmetic operations and supported computational expressions.
+
+Concepts explored:
+
+- Forward-mode derivative propagation.
+- Computational expression evaluation.
+- Derivative tracking.
+- Sensitivity analysis.
+
+**Possible applications**
+
+- Gradient-based optimization.
+- Parameter fitting.
+- Sensitivity analysis.
+- Differentiable mathematical experiments.
+
+### 6. RigidBodyDynamics
+
+**Classical Mechanics · Physical Simulation**
+
+Explores the mathematical description of rigid-body motion under applied forces, torques, and inertial properties.
+
+Concepts explored:
+
+- Linear and angular motion.
+- Mass and inertia representations.
+- Force and torque relationships.
+- Rigid-body state evolution.
+- Translational and rotational dynamics.
+
+**Possible applications**
+
+- Physics experiments.
+- Mechanical system modeling.
+- Robotics-inspired simulation.
+- Motion analysis.
+
+### 7. NumericalOptimization
+
+**Numerical Optimization · Iterative Minimization**
+
+Explores numerical techniques for finding solutions that minimize objective functions under supported assumptions and constraints.
+
+Concepts explored:
+
+- Objective-function evaluation.
+- Iterative parameter updates.
+- Gradient-based optimization concepts.
+- Convergence criteria.
+- Numerical minimization.
+
+**Possible applications**
+
+- Parameter estimation.
+- Curve fitting.
+- Mathematical calibration.
+- Optimization experiments.
+
+### 8. TrajectoryPlanning
+
+**Motion Planning · Trajectory Generation**
+
+Focuses on constructing and evaluating paths or time-dependent motion profiles between states or spatial targets.
+
+Concepts explored:
+
+- Trajectory construction.
+- Motion-profile evaluation.
+- Boundary-condition handling.
+- Smooth movement planning.
+- Integration with geometric and kinematic representations.
+
+**Possible applications**
+
+- NPC movement.
+- Robotics-inspired path planning.
+- Camera and object motion.
+- Procedural animation.
+
+---
+
+## How VectorForge works
+
+VectorForge provides a set of independent mathematical modules that can be used inside a Roblox experience. You define a problem or mathematical model, select the relevant module, provide the required inputs, and use the returned results in your own system.
+
+The diagram below gives a high-level overview of this workflow. It is a conceptual explanation of how a developer can use the library; it does not imply that all modules are automatically connected or that VectorForge runs a single fixed pipeline.
+
+![How VectorForge works — computation flow and module overview](docs/assets/how-vectorforge-works.png)
+
+## How VectorForge Fits Together
+
+The modules are organized around separate mathematical responsibilities.
+
+```text
+                    Roblox Experience
+                           |
+                           v
+                      VectorForge
+                           |
+       +-------------------+-------------------+
+       |                   |                   |
+       v                   v                   v
+ LieGroupKinematics  SpectralLinearAlgebra  BayesianStateEstimation
+       |                   |                   |
+       v                   v                   v
+ Spatial Mathematics  Numerical Methods    State Estimation
+
+       +-------------------+-------------------+
+       |                   |                   |
+       v                   v                   v
+ DifferentialPathGeometry  AutomaticDifferentiation  RigidBodyDynamics
+       |                   |                   |
+       v                   v                   v
+ Curve Analysis         Derivatives           Dynamics
+
+       +-------------------+-------------------+
+       |                   |
+       v                   v
+ NumericalOptimization  TrajectoryPlanning
+       |                   |
+       v                   v
+ Optimization          Motion Planning
+```
+
+The modular structure is intended to support:
+
+- Independent mathematical components.
+- Reusable implementations.
+- Clear separation of responsibilities.
+- Easier testing and maintenance.
+- Future mathematical extensions.
+
+See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for more details.
 
 ---
 
 ## Examples
 
-The `examples/` directory contains standalone demonstrations designed to illustrate how the mathematical modules can be applied within Roblox.
+The `examples/` directory contains standalone demonstrations showing how selected VectorForge modules can be used inside Roblox.
 
 | Example | Description |
 |---|---|
-| Pose Interpolation | Demonstrates interpolation between rigid-body poses |
-| Differential Path | Demonstrates curve sampling and movement along a geometric path |
-| Bayesian Motion Tracking | Demonstrates estimation using noisy position observations |
-| Least-Squares Regression | Demonstrates polynomial fitting using numerical linear algebra |
-| Integration Demo | Demonstrates interactions across the expanded VectorForge module set |
+| Pose Interpolation | Interpolation between rigid-body poses |
+| Differential Path | Curve sampling and movement along a geometric path |
+| Bayesian Motion Tracking | Estimation using noisy position observations |
+| Least-Squares Regression | Polynomial fitting using numerical linear algebra |
+| Integration Demo | Demonstrations involving the expanded module set |
 
-Each example is intended to be independently understandable and can be used as a starting point for further experimentation.
+Each example is intended to be independently understandable and provide a starting point for further experimentation.
 
-See [examples/README.md](examples/README.md) for setup instructions.
-
----
+See [examples/README.md](examples/README.md).
 
 ## Experiments
 
-The `experiments/` directory contains exploratory scripts designed to demonstrate mathematical concepts visually and investigate possible applications of VectorForge.
-
-Current experiments include:
+The `experiments/` directory contains exploratory scripts for visualizing mathematical concepts and investigating possible applications.
 
 | Experiment | Description |
 |---|---|
 | Celestial Mechanics | Educational visualization of simplified gravitational motion |
 | Orbital Simulation | Exploration of orbital trajectories using simplified mechanics |
 | Kalman Visualization | Visualization of noisy observations and smoothed estimates |
-| Trajectory Laboratory | Experimental trajectory construction and visualization |
+| Trajectory Laboratory | Experimental trajectory construction |
 | Numerical Stability Lab | Comparison of numerical summation approaches |
 
-These scripts are intended for experimentation and learning rather than production-ready simulation.
+These experiments are intended for exploration rather than production-ready simulation.
 
-Some experiments use simplified reference calculations or visualization adapters. They should not be interpreted as proof that every underlying algorithm is implemented by a VectorForge module.
-
-In particular, the celestial and orbital demonstrations are simplified Newtonian models, not general-relativistic simulations. The Kalman visualization is a simplified smoothing demonstration rather than a complete EKF implementation.
+Some demonstrations use simplified reference calculations or visualization adapters. For example, the celestial and orbital demonstrations use simplified Newtonian models, not general relativity. The Kalman visualization is a simplified smoothing demonstration rather than a complete EKF implementation.
 
 See [experiments/README.md](experiments/README.md).
 
----
-
 ## Benchmarking
 
-The `benchmarks/` directory provides workload-oriented scripts for investigating the performance of selected mathematical operations.
+The `benchmarks/` directory contains workload-oriented scripts for investigating the performance of selected mathematical operations.
 
-The current benchmark collection includes:
+Current benchmark areas include:
 
-- Matrix computation workloads.
-- Numerical optimization workloads.
-- Differential geometry workloads.
-- State estimation workloads.
+- Matrix computation.
+- Numerical optimization.
+- Differential geometry.
+- State estimation.
 - Shared benchmark utilities.
 
-The benchmark scripts are intended to provide a starting point for performance measurement and comparison.
+Benchmark results can vary with hardware, runtime conditions, input dimensions, and implementation details.
 
-Results may vary depending on hardware, Roblox runtime conditions, input sizes, and implementation details.
+Some scripts require adapters to connect their workload callbacks to the verified public APIs. Their presence does not mean comprehensive performance measurements have already been completed.
 
-Some benchmark scripts require adapters to connect their workload callbacks to the verified public APIs of the corresponding modules. Their presence does not imply that comprehensive performance measurements have already been completed.
+Documentation:
 
-For benchmarking methodology and guidance, see:
+- [Benchmarking Guide](docs/BENCHMARKING.md)
+- [Benchmark Scripts](benchmarks/README.md)
 
-- [BENCHMARKING.md](docs/BENCHMARKING.md)
-- [benchmarks/README.md](benchmarks/README.md)
+## Mathematical Foundations
 
----
+VectorForge draws on several mathematical disciplines.
+
+| Area | Concepts |
+|---|---|
+| Linear Algebra | Matrix operations, decompositions, eigenvalues |
+| Differential Geometry | Curvature, torsion, tangent and normal frames |
+| Lie Theory | SO(3), SE(3), exponential and logarithmic maps |
+| Numerical Analysis | Approximation, integration, iterative solvers |
+| Probability Theory | Bayesian estimation and uncertainty |
+| Optimization | Least-squares estimation and iterative minimization |
+| Signal Processing | Frequency-domain analysis and numerical transforms |
+
+For additional explanations, see [MATHEMATICS.md](docs/MATHEMATICS.md).
 
 ## Research Notes
 
-The `research/` directory contains supporting mathematical notes and exploratory material related to the project's development.
+The `research/` directory contains supporting mathematical notes and exploratory material.
 
 Current topics include:
 
@@ -623,9 +443,7 @@ Current topics include:
 - Bayesian state estimation.
 - Potential future algorithms and mathematical extensions.
 
-These documents provide a place to record theoretical considerations, investigate alternative methods, and organize ideas before they become part of the core implementation.
-
-Research notes are supplementary material and should not be interpreted as formal mathematical verification.
+These notes document theoretical considerations and possible approaches during development. They are supplementary material, not formal mathematical verification.
 
 See [research/README.md](research/README.md).
 
@@ -633,9 +451,9 @@ See [research/README.md](research/README.md).
 
 ## Testing
 
-VectorForge includes regression and comprehensive test scripts designed to exercise important mathematical operations across its expanded module set.
+VectorForge includes regression and comprehensive test scripts covering important operations across its modules.
 
-The test runner checks several areas, including:
+The current test areas include:
 
 - Quaternion operations and rigid transformations.
 - Matrix multiplication and decomposition.
@@ -646,10 +464,10 @@ The test runner checks several areas, including:
 - Curve evaluation and differential properties.
 - Arc-length calculations.
 - Trajectory boundary conditions.
-- Automatic differentiation and numerical optimization checks.
-- Rigid-body dynamics and trajectory-planning checks.
+- Automatic differentiation.
+- Rigid-body dynamics and trajectory planning.
 
-### Running the Tests
+### Running the tests
 
 1. Install the VectorForge modules in `ReplicatedStorage/VectorForge`.
 2. Place the test runner inside `ServerScriptService`.
@@ -657,95 +475,167 @@ The test runner checks several areas, including:
 4. Open the Output window.
 5. Inspect the test results.
 
-The suite represents an initial regression-testing foundation. It does not constitute formal mathematical verification or guarantee numerical stability.
+The suite provides an initial regression-testing foundation. It does not constitute formal mathematical verification or guarantee numerical stability.
 
 See [tests/README.md](tests/README.md).
 
----
-
 ## Performance Considerations
 
-Numerical algorithms can become computationally expensive depending on their input dimensions, iteration counts, and frequency of execution.
+Numerical algorithms can become expensive depending on their input dimensions, iteration counts, and execution frequency.
 
-When using VectorForge in Roblox experiences, consider:
+When using VectorForge, consider:
 
 - Avoiding unnecessary matrix decompositions.
-- Reusing previously calculated results when inputs remain unchanged.
-- Limiting expensive numerical operations inside frame-dependent loops.
+- Reusing calculated results when inputs remain unchanged.
+- Limiting expensive operations inside frame-dependent loops.
 - Choosing appropriate solver tolerances and iteration limits.
-- Profiling algorithms with representative workloads.
+- Profiling with representative workloads.
 - Separating authoritative server calculations from client-side visual calculations where appropriate.
 
-The performance characteristics of the current implementation have not yet been comprehensively benchmarked.
+The current implementation has not yet been comprehensively benchmarked.
+
+## Repository Structure
+
+```text
+VectorForge/
+│
+├── benchmarks/
+├── docs/
+├── examples/
+│   └── server/
+├── experiments/
+├── research/
+├── src/
+│   └── VectorForge/
+│       ├── LieGroupKinematics
+│       ├── SpectralLinearAlgebra
+│       ├── BayesianStateEstimation
+│       ├── DifferentialPathGeometry
+│       ├── AutomaticDifferentiation
+│       ├── RigidBodyDynamics
+│       ├── NumericalOptimization
+│       └── TrajectoryPlanning
+│
+├── tests/
+├── .gitignore
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── default.project.json
+├── LICENSE
+├── package.json
+├── package-lock.json
+└── README.md
+```
+
+| Directory | Responsibility |
+|---|---|
+| `src/` | Core mathematical implementations |
+| `docs/` | Technical documentation and mathematical explanations |
+| `examples/` | Practical demonstrations |
+| `tests/` | Regression tests and mathematical validation |
+| `benchmarks/` | Workload-based performance measurement |
+| `experiments/` | Visualizations and numerical demonstrations |
+| `research/` | Mathematical notes and future development ideas |
 
 ---
 
-## Development Roadmap
+## FAQ
 
-VectorForge is still evolving. The following areas represent potential future development directions rather than guaranteed release commitments.
+<details>
+<summary><strong>Is VectorForge a replacement for Roblox Vector3 or CFrame?</strong></summary>
 
-### Numerical Improvements
+No. VectorForge explores mathematical operations that go beyond conventional vector and transformation utilities. Roblox's built-in APIs remain useful and appropriate for many everyday development tasks.
 
+</details>
+
+<details>
+<summary><strong>Is VectorForge production-ready?</strong></summary>
+
+Not yet. It is an experimental project. APIs, numerical behavior, performance, and implementation details may change.
+
+</details>
+
+<details>
+<summary><strong>Can I use individual modules separately?</strong></summary>
+
+The library is organized into separate mathematical modules, intended to operate independently where practical. Check the API documentation for the available functionality and dependencies.
+
+</details>
+
+<details>
+<summary><strong>Does VectorForge include performance benchmarks?</strong></summary>
+
+It includes benchmark scripts for selected workloads. Some require adapters, and comprehensive benchmark results have not yet been established.
+
+</details>
+
+<details>
+<summary><strong>Where can I find usage examples?</strong></summary>
+
+Check the `examples/` directory and [examples/README.md](examples/README.md).
+
+</details>
+
+<details>
+<summary><strong>Can I contribute?</strong></summary>
+
+Yes. Technical feedback, bug reports, suggestions, and contributions are welcome. Please review the contribution guidelines before submitting changes.
+
+</details>
+
+---
+
+## Documentation
+
+The `docs/` directory contains the technical references for VectorForge.
+
+- [API Reference](docs/API.md) — Available operations and module interfaces.
+- [Architecture](docs/ARCHITECTURE.md) — Module organization and design.
+- [Mathematics](docs/MATHEMATICS.md) — Mathematical concepts and foundations.
+- [Numerical Validation](docs/NUMERICAL_VALIDATION.md) — Validation considerations.
+- [Benchmarking](docs/BENCHMARKING.md) — Benchmark methodology and guidance.
+- [Design Decisions](docs/DESIGN_DECISIONS.md) — Project design considerations.
+- [Glossary](docs/GLOSSARY.md) — Mathematical and technical terminology.
+
+## Contributing
+
+Contributions, technical feedback, bug reports, and suggestions are welcome.
+
+If you find an issue, please include:
+
+- The affected module.
+- A minimal reproducible example.
+- Expected mathematical behavior.
+- Actual observed behavior.
+- Relevant Roblox Studio Output errors.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+
+## Development Status
+
+VectorForge is actively experimental. Possible future development areas include:
+
+**Numerical improvements**
 - Additional matrix decomposition methods.
 - Improved numerical stability.
-- More robust handling of degenerate inputs.
+- Better handling of degenerate inputs.
 - Additional iterative solvers.
-- Better convergence diagnostics.
+- Improved convergence diagnostics.
 
-### Mathematical Expansion
-
-- Advanced optimization methods.
+**Mathematical expansion**
 - Additional probability and estimation techniques.
 - More geometric transformation utilities.
 - Numerical integration methods.
 - Additional differential geometry operations.
 
-### Developer Experience
-
+**Developer experience**
 - Expanded API documentation.
 - More practical examples.
 - Additional automated tests.
 - Performance benchmarks.
 - Improved error handling and validation.
 
-### Research and Experimentation
-
-- More numerical experiments.
-- Additional visualization tools.
-- Expanded mathematical research notes.
-- Investigation of new computational algorithms.
-
----
-
-## Limitations
-
-VectorForge is currently experimental and should not be considered a finalized mathematical framework.
-
-The current project may contain incomplete functionality, numerical limitations, undocumented edge cases, and APIs that are subject to change.
-
-Not every potential application described in this README is currently implemented.
-
-Benchmark scripts may require API-specific adapters, while experimental demonstrations may use simplified reference calculations.
-
-Developers should validate the mathematical behaviour of any functionality before using it in important gameplay systems or production environments.
-
----
-
-## Contributing
-
-Contributions, technical feedback, bug reports, and suggestions are welcome.
-
-If you discover an issue or want to improve an implementation, please review [CONTRIBUTING.md](CONTRIBUTING.md) before submitting changes.
-
-When reporting an issue, provide:
-
-- The affected module.
-- A minimal reproducible example.
-- Expected mathematical behaviour.
-- Actual observed behaviour.
-- Relevant Roblox Studio Output errors.
-
----
+These are development directions, not guaranteed release commitments.
 
 ## License
 
@@ -755,12 +645,10 @@ See [LICENSE](LICENSE) for the complete license text.
 
 ---
 
-## Final Note
+<div align="center">
 
-VectorForge is an ongoing experimental project exploring how advanced computational mathematics can be implemented and applied within the Roblox Luau environment.
+**VectorForge**
 
-It is not intended to be presented as a finished framework or a complete replacement for specialized numerical software.
+*Exploring computational mathematics in Roblox Luau.*
 
-The purpose of sharing this project is to document the work, experiment with mathematical implementations, explore possible applications, and make its development accessible to other developers interested in the same field.
-
-**The project is still a work in progress, and there is considerably more to explore.**
+</div>

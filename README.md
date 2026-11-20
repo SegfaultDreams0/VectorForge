@@ -318,36 +318,7 @@ The diagram below gives a high-level overview of this workflow. It is a conceptu
 
 The modules are organized around separate mathematical responsibilities.
 
-```text
-                    Roblox Experience
-                           |
-                           v
-                      VectorForge
-                           |
-       +-------------------+-------------------+
-       |                   |                   |
-       v                   v                   v
- LieGroupKinematics  SpectralLinearAlgebra  BayesianStateEstimation
-       |                   |                   |
-       v                   v                   v
- Spatial Mathematics  Numerical Methods    State Estimation
-
-       +-------------------+-------------------+
-       |                   |                   |
-       v                   v                   v
- DifferentialPathGeometry  AutomaticDifferentiation  RigidBodyDynamics
-       |                   |                   |
-       v                   v                   v
- Curve Analysis         Derivatives           Dynamics
-
-       +-------------------+-------------------+
-       |                   |
-       v                   v
- NumericalOptimization  TrajectoryPlanning
-       |                   |
-       v                   v
- Optimization          Motion Planning
-```
+![How VectorForge works — computation flow and module overview](docs/assets/How-VectorForge-Fits-Together.png)
 
 The modular structure is intended to support:
 

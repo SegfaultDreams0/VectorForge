@@ -13,7 +13,7 @@ VectorForge is an experimental Luau library exploring the implementation of adva
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Experimental-orange?style=flat-square)](#project-status)
 
-**[Quick Start](#quick-start) · [Modules](#core-modules) · [Examples](#examples) · [Experiments](#experiments) · [Documentation](#documentation)**
+**[Quick Start](#quick-start) · [Core Modules](#core-modules) · [Examples](#examples) · [Experiments](#experiments) · [Simulations](#simulations) · [Datasets](#datasets) · [Visualizations](#visualizations) · [Documentation](#documentation)**
 
 </div>
 
@@ -366,6 +366,57 @@ Some demonstrations use simplified reference calculations or visualization adapt
 
 See [experiments/README.md](experiments/README.md).
 
+
+## Simulations
+
+The `simulations/` folder is where the project keeps a couple of standalone numerical models. They are useful when testing how a system changes over time without tying the calculation to a Roblox scene.
+
+The current scripts cover two different problems:
+
+| Script | What it models |
+|---|---|
+| `TwoBodyOrbit.lua` | Relative motion under a simplified Newtonian gravitational model |
+| `DampedOscillator.lua` | A mass attached to a spring with linear damping |
+
+Both use a fourth-order Runge–Kutta step. The caller supplies the initial state and time step, so the simulation clock and stopping conditions stay under the caller's control.
+
+The orbit example uses SI units: metres, metres per second, seconds, and cubic metres per second squared for the gravitational parameter. The oscillator uses metres, kilograms, seconds, newtons per metre, and newton-seconds per metre.
+
+These are intentionally small models. The orbit script does not account for additional bodies, atmospheric drag, collisions, or relativistic effects. The oscillator assumes a linear spring and linear viscous damping. Neither one should be treated as a production physics engine.
+
+See [simulations/README.md](simulations/README.md) for the setup, parameters, and limitations of each script.
+
+## Datasets
+
+The `datasets/` folder holds reference values and sample data used by the project's scripts and experiments. Keeping the data separate from the algorithms makes it easier to reuse the same inputs and see exactly what a demonstration is working with.
+
+| File | Contents |
+|---|---|
+| `PhysicalConstants.lua` | A small collection of physical constants in SI units |
+| `SolarSystem.lua` | Approximate masses, mean semi-major axes, orbital periods, and derived gravitational parameters for selected planets |
+| `MotionSamples.lua` | A short synthetic sequence of timestamped 2D position observations |
+
+The planetary values are rounded reference data, not precision ephemerides. The motion samples are generated examples, not measurements from a real sensor. Those distinctions matter when using the data in numerical comparisons or state-estimation experiments.
+
+If you add more data, include its units and say whether it is measured, synthetic, or approximate. It saves a lot of confusion later.
+
+See [datasets/README.md](datasets/README.md) for the data conventions and usage examples.
+
+## Visualizations
+
+The `visualizations/` folder contains small Roblox helpers for displaying calculated results in a 3D scene. The idea is to keep the math and the drawing separate: a simulation or algorithm produces values, and a renderer turns those values into something you can inspect.
+
+| Module | What it displays |
+|---|---|
+| `TrajectoryRenderer.lua` | A sequence of `Vector3` points connected by anchored segments |
+| `VectorFieldRenderer.lua` | Vector samples shown as direction indicators in 3D space |
+
+Both modules create a `Model` under the parent you provide. Their parts are anchored and non-collidable. When you are finished with a visualization, destroy the returned model to clean up the generated instances.
+
+These helpers are meant for debugging and small demonstrations, not dense scientific plotting. A large number of parts can become expensive, especially if they are replicated or rebuilt frequently. Keep the sample count reasonable and profile the result in Studio.
+
+See [visualizations/README.md](visualizations/README.md) for examples and renderer options.
+
 ## Benchmarking
 
 The `benchmarks/` directory contains workload-oriented scripts for investigating the performance of selected mathematical operations.
@@ -471,11 +522,14 @@ The current implementation has not yet been comprehensively benchmarked.
 VectorForge/
 │
 ├── benchmarks/
+├── computational-research/
+├── datasets/
 ├── docs/
 ├── examples/
 │   └── server/
 ├── experiments/
 ├── research/
+├── simulations/
 ├── src/
 │   └── VectorForge/
 │       ├── LieGroupKinematics
@@ -486,8 +540,8 @@ VectorForge/
 │       ├── RigidBodyDynamics
 │       ├── NumericalOptimization
 │       └── TrajectoryPlanning
-│
 ├── tests/
+└── visualizations/
 ├── .gitignore
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -500,13 +554,17 @@ VectorForge/
 
 | Directory | Responsibility |
 |---|---|
-| `src/` | Core mathematical implementations |
+| `src/` | Core VectorForge modules for Roblox Luau |
 | `docs/` | Technical documentation and mathematical explanations |
-| `examples/` | Practical demonstrations |
-| `tests/` | Regression tests and mathematical validation |
-| `benchmarks/` | Workload-based performance measurement |
-| `experiments/` | Visualizations and numerical demonstrations |
-| `research/` | Mathematical notes and future development ideas |
+| `examples/` | Practical demonstrations of the core modules |
+| `tests/` | Regression tests and numerical checks |
+| `benchmarks/` | Workload-based performance measurements |
+| `experiments/` | Exploratory scripts and demonstrations |
+| `research/` | Mathematical notes and ideas under investigation |
+| `computational-research/` | Standalone advanced mathematics and scientific scripts |
+| `simulations/` | Time-stepped numerical models |
+| `datasets/` | Reference constants and sample inputs |
+| `visualizations/` | Roblox helpers for displaying numerical results |
 
 ---
 
@@ -534,6 +592,13 @@ The library is organized into separate mathematical modules, intended to operate
 </details>
 
 <details>
+<summary><strong>What are the simulations, datasets, and visualizations folders for?</strong></summary>
+
+They sit alongside the core library. `simulations/` contains small time-stepped models, `datasets/` keeps reference and example inputs, and `visualizations/` contains Roblox helpers for displaying results. They are supporting material and do not change how the core modules are installed.
+
+</details>
+
+<details>
 <summary><strong>Does VectorForge include performance benchmarks?</strong></summary>
 
 It includes benchmark scripts for selected workloads. Some require adapters, and comprehensive benchmark results have not yet been established.
@@ -543,7 +608,7 @@ It includes benchmark scripts for selected workloads. Some require adapters, and
 <details>
 <summary><strong>Where can I find usage examples?</strong></summary>
 
-Check the `examples/` directory and [examples/README.md](examples/README.md).
+Check the `examples/` directory and [examples/README.md](examples/README.md). The `simulations/` and `visualizations/` folders also contain focused demonstrations.
 
 </details>
 
@@ -567,6 +632,9 @@ The `docs/` directory contains the technical references for VectorForge.
 - [Benchmarking](docs/BENCHMARKING.md) — Benchmark methodology and guidance.
 - [Design Decisions](docs/DESIGN_DECISIONS.md) — Project design considerations.
 - [Glossary](docs/GLOSSARY.md) — Mathematical and technical terminology.
+- [Simulations](simulations/README.md) — Numerical models and integration details.
+- [Datasets](datasets/README.md) — Reference values, units, and sample data.
+- [Visualizations](visualizations/README.md) — Scene-rendering helpers and usage.
 
 ## Contributing
 

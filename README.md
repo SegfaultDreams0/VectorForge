@@ -45,7 +45,8 @@ You can install VectorForge manually or use the included Rojo project configurat
 2. Navigate to `ReplicatedStorage`.
 3. Create a folder named `VectorForge`.
 4. Copy the ModuleScripts from `src/VectorForge/` into that folder.
-5. Keep the original ModuleScript names.
+5. Create `ReplicatedStorage/VectorForgeShared` and copy the shared utility ModuleScripts into it.
+6. Keep the original ModuleScript names and folder structure.
 
 Your Explorer hierarchy should look like this:
 
@@ -66,7 +67,7 @@ ReplicatedStorage
 
 VectorForge includes a Rojo project configuration.
 
-Make sure `default.project.json` maps `src/VectorForge` to `ReplicatedStorage/VectorForge`.
+Make sure `default.project.json` maps `src/VectorForge` to `ReplicatedStorage/VectorForge` and the repository root `VectorForgeShared/` directory to `ReplicatedStorage/VectorForgeShared`. Check the project file before relying on the mapping.
 
 Build the project:
 
@@ -84,7 +85,9 @@ After installation, load the modules using Roblox's `require()` function.
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local VectorForgeShared = ReplicatedStorage:WaitForChild("VectorForgeShared")
 
+local SharedConstants = require(VectorForgeShared:WaitForChild("Constants"))
 local Lie = require(VectorForge.LieGroupKinematics)
 local LinearAlgebra = require(VectorForge.SpectralLinearAlgebra)
 local StateEstimation = require(VectorForge.BayesianStateEstimation)
@@ -312,16 +315,16 @@ Concepts explored:
 
 The repository includes a separate experimental extension layer alongside the original eight Core Modules. These additions are organized by scientific domain at the repository root. They are not placed inside `src/VectorForge/`, so the original core library remains distinct from the broader research modules.
 
-The current extension package contains:
+The current extension package is organized around:
 
 - **15 scientific domain folders**
 - **300 domain modules**, with 20 modules in each domain
 - **30 domain support modules**, with two additional files at the root of each domain folder
-- **5 shared utility modules**
+- **7 shared utility modules** in `VectorForgeShared/`
 - **10 named simulation examples**
 - **10 numerical invariant and validation examples**
 
-That is **355 Lua files** across the extension package, excluding this README.
+That is **357 Lua files** across the extension package, excluding this README. This is a repository inventory count, not a claim that every module is a fully validated scientific solver.
 
 ### Scientific domains
 
@@ -353,26 +356,32 @@ Each scientific domain contains three subfolders:
 
 Each domain folder also contains two additional support modules directly at its root. These provide domain-specific configuration, material data, constants, sampling rules, or helper functions.
 
-The shared utilities live in `shared/`:
+The shared utilities live in the single root folder `VectorForgeShared/`. In Roblox Studio, this folder belongs under `ReplicatedStorage/VectorForgeShared`:
 
 | Module | Responsibility |
 |---|---|
+| `Constants.lua` | Shared physical and mathematical constants |
 | `CoreRegistry.lua` | Explicit registration and lookup of existing VectorForge Core Modules |
+| `EquationCatalog.lua` | A compact catalog of governing equations used as references |
 | `LinearAlgebra.lua` | Basic row-array matrix operations |
 | `NumericalGuards.lua` | Finite-value checks, clamping, and safe division |
+| `NumericalKernels.lua` | Shared low-level numerical kernels |
 | `SimulationClock.lua` | Fixed-step simulation timing |
-| `EquationCatalog.lua` | A compact catalog of governing equations used as references |
 
 ### Integration with the Core Modules
 
-The extension modules are kept separate from `src/VectorForge/`. Their `shared/CoreRegistry.lua` provides a dependency-injection mechanism so a bootstrap script can register the actual Core Module instances.
+The extension modules are kept separate from `src/VectorForge/`. Their `VectorForgeShared/CoreRegistry.lua` provides a dependency-injection mechanism so a bootstrap script can register the actual Core Module instances.
 
 The registry does not guess module paths or automatically load the Core Modules. Register only modules that exist in the project and whose public APIs have been checked.
+
+**Important:** use one shared folder named `VectorForgeShared`. Do not keep parallel copies under `shared`, `Shared`, and `VectorForgeShared`. Domain modules and bootstrap scripts should resolve the same `ReplicatedStorage/VectorForgeShared` instance.
 
 Example:
 
 ```lua
-local CoreRegistry = require(path.to.shared.CoreRegistry)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local CoreRegistry = require(Shared:WaitForChild("CoreRegistry"))
 
 CoreRegistry.Configure({
     SpectralLinearAlgebra = require(path.to.src.VectorForge.SpectralLinearAlgebra),
@@ -656,12 +665,14 @@ VectorForge/
 ├── rigid-body-physics/
 ├── continuum-mechanics/
 ├── stochastic-processes/
-├── shared/
+├── VectorForgeShared/
+│   ├── Constants.lua
 │   ├── CoreRegistry.lua
+│   ├── EquationCatalog.lua
 │   ├── LinearAlgebra.lua
 │   ├── NumericalGuards.lua
-│   ├── SimulationClock.lua
-│   └── EquationCatalog.lua
+│   ├── NumericalKernels.lua
+│   └── SimulationClock.lua
 │
 ├── src/
 │   └── VectorForge/
@@ -698,7 +709,7 @@ VectorForge/
 | `datasets/` | Reference constants and sample inputs |
 | `visualizations/` | Roblox helpers for displaying numerical results |
 | Scientific domain folders | Experimental modules for physics, engineering, geometry, optimization, and scientific computing |
-| `shared/` | Shared extension utilities and explicit Core Module registration |
+| `VectorForgeShared/` | One shared utility layer and explicit Core Module registration |
 
 ---
 
@@ -759,7 +770,7 @@ Yes. Technical feedback, bug reports, suggestions, and contributions are welcome
 <details>
 <summary><strong>Are the scientific domain folders part of the original Core Modules?</strong></summary>
 
-They are a separate experimental extension layer at the repository root. The original eight Core Modules remain under `src/VectorForge/`. The extensions can be developed and tested independently, with optional Core Module dependencies registered through `shared/CoreRegistry.lua`.
+They are a separate experimental extension layer at the repository root. The original eight Core Modules remain under `src/VectorForge/`. The extensions can be developed and tested independently, with optional Core Module dependencies registered through `VectorForgeShared/CoreRegistry.lua`.
 
 </details>
 

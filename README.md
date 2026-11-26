@@ -13,7 +13,7 @@ VectorForge is an experimental Luau library exploring the implementation of adva
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Experimental-orange?style=flat-square)](#project-status)
 
-**[Quick Start](#quick-start) · [Core Modules](#core-modules) · [Examples](#examples) · [Experiments](#experiments) · [Simulations](#simulations) · [Datasets](#datasets) · [Visualizations](#visualizations) · [Documentation](#documentation)**
+**[Quick Start](#quick-start) · [Core Modules](#core-modules) · [Scientific Extensions](#scientific-extensions) · [Examples](#examples) · [Experiments](#experiments) · [Simulations](#simulations) · [Datasets](#datasets) · [Visualizations](#visualizations) · [Documentation](#documentation)**
 
 </div>
 
@@ -23,7 +23,7 @@ VectorForge is an experimental Luau library exploring the implementation of adva
 
 Roblox provides a convenient environment for building interactive experiences, but some mathematical problems require more specialized numerical techniques.
 
-VectorForge explores how these techniques can be implemented in Luau through a collection of independent mathematical modules.
+VectorForge explores how these techniques can be implemented in Luau through a collection of independent mathematical modules. The repository now also includes a larger experimental research layer covering scientific computing topics such as fluid dynamics, finite element methods, quantum mechanics, electromagnetics, continuum mechanics, orbital mechanics, and stochastic processes.
 
 The project covers concepts commonly found in numerical analysis, robotics, computational geometry, classical mechanics, probability, and optimization.
 
@@ -306,6 +306,106 @@ Concepts explored:
 
 ---
 
+## Scientific Extensions
+
+The repository includes a separate experimental extension layer alongside the original eight Core Modules. These additions are organized by scientific domain at the repository root. They are not placed inside `src/VectorForge/`, so the original core library remains distinct from the broader research modules.
+
+The current extension package contains:
+
+- **15 scientific domain folders**
+- **300 domain modules**, with 20 modules in each domain
+- **30 domain support modules**, with two additional files at the root of each domain folder
+- **5 shared utility modules**
+- **10 named simulation examples**
+- **10 numerical invariant and validation examples**
+
+That is **355 Lua files** across the extension package, excluding this README.
+
+### Scientific domains
+
+| Domain folder | Main research areas |
+|---|---|
+| `fluid-dynamics/` | Flow models, momentum equations, transport, and fluid solver foundations |
+| `control-systems/` | State-space models, feedback control, observers, and stability analysis |
+| `finite-element-methods/` | Element formulations, material data, quadrature, and assembly concepts |
+| `signal-processing/` | Discrete transforms, filtering, convolution, and sampling theory |
+| `tensor-calculus/` | Tensor storage, contractions, metrics, and differential operations |
+| `differential-equations/` | Initial-value integration, boundary-value problems, and numerical stepping |
+| `computational-geometry/` | Parametric curves, curvature, geometric predicates, and mesh concepts |
+| `optimization-methods/` | Gradient methods, line searches, least-squares objectives, and stopping rules |
+| `quantum-mechanics/` | Wavefunction representations, probability density, and quantum model foundations |
+| `thermodynamics/` | Equations of state, thermal properties, energy, and thermodynamic conversions |
+| `electromagnetics/` | Electromagnetic fields, Lorentz force, constants, and field sampling |
+| `orbital-mechanics/` | Two-body motion, orbital parameters, and astrodynamics constants |
+| `rigid-body-physics/` | Inertia, angular momentum, contact settings, and rotational dynamics |
+| `continuum-mechanics/` | Strain measures, elastic material data, and constitutive model foundations |
+| `stochastic-processes/` | Random processes, stochastic stepping, and probability distributions |
+
+### Folder layout
+
+Each scientific domain contains three subfolders:
+
+- `analysis/` — analysis-oriented modules and calculations
+- `models/` — model and state representations
+- `solvers/` — numerical procedures and solver-oriented modules
+
+Each domain folder also contains two additional support modules directly at its root. These provide domain-specific configuration, material data, constants, sampling rules, or helper functions.
+
+The shared utilities live in `shared/`:
+
+| Module | Responsibility |
+|---|---|
+| `CoreRegistry.lua` | Explicit registration and lookup of existing VectorForge Core Modules |
+| `LinearAlgebra.lua` | Basic row-array matrix operations |
+| `NumericalGuards.lua` | Finite-value checks, clamping, and safe division |
+| `SimulationClock.lua` | Fixed-step simulation timing |
+| `EquationCatalog.lua` | A compact catalog of governing equations used as references |
+
+### Integration with the Core Modules
+
+The extension modules are kept separate from `src/VectorForge/`. Their `shared/CoreRegistry.lua` provides a dependency-injection mechanism so a bootstrap script can register the actual Core Module instances.
+
+The registry does not guess module paths or automatically load the Core Modules. Register only modules that exist in the project and whose public APIs have been checked.
+
+Example:
+
+```lua
+local CoreRegistry = require(path.to.shared.CoreRegistry)
+
+CoreRegistry.Configure({
+    SpectralLinearAlgebra = require(path.to.src.VectorForge.SpectralLinearAlgebra),
+    AutomaticDifferentiation = require(path.to.src.VectorForge.AutomaticDifferentiation),
+    BayesianStateEstimation = require(path.to.src.VectorForge.BayesianStateEstimation),
+})
+
+local LinearAlgebraCore = CoreRegistry.Require("SpectralLinearAlgebra")
+```
+
+The extension source represents mathematical states with numeric arrays and does not directly depend on Roblox spatial datatypes. This does not mean every algorithm is a complete physical solver or that every module has been validated against a reference implementation.
+
+### Examples and validation files
+
+The `examples/` folder contains individually named numerical studies, including damped oscillator response, coupled state evolution, nonlinear response, energy decay, integration stability, and long-horizon state evolution.
+
+The extension additions in `tests/` include small numerical invariant checks. They are useful starting points for regression tests, but they are not a substitute for analytical benchmarks, dimensional checks, convergence studies, or verification against trusted scientific data.
+
+### Research and production status
+
+The scientific extensions are experimental research scaffolding. Some modules expose reusable numerical routines and domain-specific calculations; others provide a foundation that still needs a problem-specific discretization, boundary conditions, constitutive laws, units, and solver strategy.
+
+Before using an extension in a production experience:
+
+1. Check the module's inputs, outputs, dimensions, and units.
+2. Verify its assumptions and boundary conditions.
+3. Compare its results against analytical solutions or trusted reference data.
+4. Test convergence and numerical stability over representative input ranges.
+5. Profile execution cost in Roblox Studio.
+6. Verify any Core Module integration against the actual public API.
+
+These additions expand the repository's research scope; they do not change the installation steps for the original eight Core Modules.
+
+---
+
 ## How VectorForge works
 
 VectorForge provides a set of independent mathematical modules that can be used inside a Roblox experience. You define a problem or mathematical model, select the relevant module, provide the required inputs, and use the returned results in your own system.
@@ -520,7 +620,6 @@ The current implementation has not yet been comprehensively benchmarked.
 
 ```text
 VectorForge/
-│
 ├── benchmarks/
 ├── computational-research/
 ├── datasets/
@@ -530,6 +629,38 @@ VectorForge/
 ├── experiments/
 ├── research/
 ├── simulations/
+├── visualizations/
+│
+├── fluid-dynamics/
+│   ├── analysis/
+│   ├── models/
+│   ├── solvers/
+│   └── domain support modules
+├── control-systems/
+│   ├── analysis/
+│   ├── models/
+│   ├── solvers/
+│   └── domain support modules
+├── finite-element-methods/
+├── signal-processing/
+├── tensor-calculus/
+├── differential-equations/
+├── computational-geometry/
+├── optimization-methods/
+├── quantum-mechanics/
+├── thermodynamics/
+├── electromagnetics/
+├── orbital-mechanics/
+├── rigid-body-physics/
+├── continuum-mechanics/
+├── stochastic-processes/
+├── shared/
+│   ├── CoreRegistry.lua
+│   ├── LinearAlgebra.lua
+│   ├── NumericalGuards.lua
+│   ├── SimulationClock.lua
+│   └── EquationCatalog.lua
+│
 ├── src/
 │   └── VectorForge/
 │       ├── LieGroupKinematics
@@ -541,7 +672,6 @@ VectorForge/
 │       ├── NumericalOptimization
 │       └── TrajectoryPlanning
 ├── tests/
-└── visualizations/
 ├── .gitignore
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
@@ -565,6 +695,8 @@ VectorForge/
 | `simulations/` | Time-stepped numerical models |
 | `datasets/` | Reference constants and sample inputs |
 | `visualizations/` | Roblox helpers for displaying numerical results |
+| Scientific domain folders | Experimental modules for physics, engineering, geometry, optimization, and scientific computing |
+| `shared/` | Shared extension utilities and explicit Core Module registration |
 
 ---
 
@@ -621,6 +753,21 @@ Yes. Technical feedback, bug reports, suggestions, and contributions are welcome
 
 ---
 
+
+<details>
+<summary><strong>Are the scientific domain folders part of the original Core Modules?</strong></summary>
+
+They are a separate experimental extension layer at the repository root. The original eight Core Modules remain under `src/VectorForge/`. The extensions can be developed and tested independently, with optional Core Module dependencies registered through `shared/CoreRegistry.lua`.
+
+</details>
+
+<details>
+<summary><strong>Are all scientific extension modules complete and validated solvers?</strong></summary>
+
+No. The extensions are research scaffolding. Each module must be checked for its mathematical assumptions, units, boundary conditions, convergence, numerical stability, and compatibility with the actual Core Module APIs before production use.
+
+</details>
+
 ## Documentation
 
 The `docs/` directory contains the technical references for VectorForge.
@@ -635,6 +782,8 @@ The `docs/` directory contains the technical references for VectorForge.
 - [Simulations](simulations/README.md) — Numerical models and integration details.
 - [Datasets](datasets/README.md) — Reference values, units, and sample data.
 - [Visualizations](visualizations/README.md) — Scene-rendering helpers and usage.
+
+The scientific extension folders currently document their module intent in source-level descriptions and this repository overview. Domain-specific API references and validation reports should be added as those modules are verified.
 
 ## Contributing
 

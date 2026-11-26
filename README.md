@@ -4,6 +4,8 @@
 
 ### Advanced Computational Mathematics for Roblox Luau
 
+**English** · [简体中文](docs/readme/README_zh.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [العربية](docs/readme/README_ar.md)
+
 **Explore numerical methods, geometric computation, and mathematical systems directly inside Roblox.**
 
 VectorForge is an experimental Luau library exploring the implementation of advanced computational mathematics, including Lie group kinematics, numerical linear algebra, Bayesian state estimation, differential geometry, and more.

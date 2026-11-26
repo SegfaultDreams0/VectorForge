@@ -1,9 +1,21 @@
+<div align="center">
 
 # VectorForge
+
 ### 面向 Roblox Luau 的高级计算数学
+
 **在 Roblox 中探索数值方法、几何计算与数学系统**
 
-[English](../../README.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [العربية](README_ar.md)
+[English](../../README.md) · **简体中文** · [日本語](README_ja.md) · [한국어](README_ko.md) · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [العربية](README_ar.md)
+
+[![Language](https://img.shields.io/badge/Language-Luau-blue?style=flat-square)](https://luau.org/)
+[![Platform](https://img.shields.io/badge/Platform-Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://www.roblox.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](../../LICENSE)
+[![Status](https://img.shields.io/badge/Status-Experimental-orange?style=flat-square)](../../README.md#project-status)
+
+**[Quick Start](../../README.md#quick-start) · [Core Modules](../../README.md#core-modules) · [Scientific Extensions](../../README.md#scientific-extensions) · [Examples](../../README.md#examples) · [Experiments](../../README.md#experiments) · [Simulations](../../README.md#simulations) · [Datasets](../../README.md#datasets) · [Visualizations](../../README.md#visualizations) · [Documentation](../../README.md#documentation)**
+
+</div>
 
 ---
 

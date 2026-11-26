@@ -6,7 +6,7 @@
 
 **Khám phá phương pháp số, tính toán hình học và hệ thống toán học ngay trong Roblox**
 
-[English](../../README.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · **Tiếng Việt** · [ไทย](README_th.md) · [العربية](README_ar.md)
+[English](../../README.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · [한국어](README_ko.md) · **Tiếng Việt** · [ไทย](README_th.md) · [العربية](README_ar.md) · [MA Darija (9rombo idea)](docs/readme/README_darija.md)
 
 [![Language](https://img.shields.io/badge/Language-Luau-blue?style=flat-square)](https://luau.org/)
 [![Platform](https://img.shields.io/badge/Platform-Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://www.roblox.com/)

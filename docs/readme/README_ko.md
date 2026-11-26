@@ -6,7 +6,7 @@
 
 **Roblox에서 수치 기법, 기하 계산 및 수학 시스템을 탐구합니다**
 
-[English](../../README.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · **한국어** · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [العربية](README_ar.md)
+[English](../../README.md) · [简体中文](README_zh.md) · [日本語](README_ja.md) · **한국어** · [Tiếng Việt](README_vi.md) · [ไทย](README_th.md) · [العربية](README_ar.md) · [MA Darija (9rombo idea)](docs/readme/README_darija.md)
 
 [![Language](https://img.shields.io/badge/Language-Luau-blue?style=flat-square)](https://luau.org/)
 [![Platform](https://img.shields.io/badge/Platform-Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://www.roblox.com/)

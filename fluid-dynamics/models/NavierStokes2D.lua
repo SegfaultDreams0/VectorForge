@@ -1,170 +1,56 @@
--- navier stokes2d
-local NavierStokes2D = {}
-NavierStokes2D.__index = NavierStokes2D
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- fluid-dynamics implementation for NavierStokes2D
+-- Units: SI for density, velocity, length, time, pressure, and viscosity; grid methods assume the stated dimensionality and require stable spacing and timestep choices.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.VorticityRHS(omega,u,v,dx,dy,nu)
+    Num.Positive(dx,"dx"); Num.Positive(dy,"dy"); Num.Nonnegative(nu,"kinematic viscosity")
+    local rows=#omega; local cols=#omega[1]; local rhs=LA.Zeros(rows,cols)
+    for i=2,rows-1 do for j=2,cols-1 do
+        local adv=u[i][j]*(omega[i][j+1]-omega[i][j-1])/(2*dx)+v[i][j]*(omega[i+1][j]-omega[i-1][j])/(2*dy)
+        local lap=(omega[i][j+1]-2*omega[i][j]+omega[i][j-1])/(dx*dx)+(omega[i+1][j]-2*omega[i][j]+omega[i-1][j])/(dy*dy)
+        rhs[i][j]=-adv+nu*lap
+    end end
+    return rhs
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function NavierStokes2D.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, NavierStokes2D)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function NavierStokes2D:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+
+
+-- Conservative 2D vorticity transport on a uniform grid:
+-- dω/dt + u dω/dx + v dω/dy = ν Laplacian(ω) + source.
+function Module.VorticityTransportStep(vorticity, velocityX, velocityY, dx, dy, dt, viscosity, source)
+    Num.Positive(dx,"x spacing"); Num.Positive(dy,"y spacing"); Num.Positive(dt,"time step")
+    Num.Nonnegative(viscosity,"kinematic viscosity")
+    local ny,nx=#vorticity,#vorticity[1]
+    assert(nx>=3 and ny>=3 and #velocityX==ny and #velocityY==ny,"flow grid dimensions mismatch")
+    local nextField=table.create(ny)
+    for j=1,ny do
+        assert(#vorticity[j]==nx and #velocityX[j]==nx and #velocityY[j]==nx,"flow grids must be rectangular")
+        nextField[j]=table.clone(vorticity[j])
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
+    local idx2,idy2=1/(dx*dx),1/(dy*dy)
+    for j=2,ny-1 do for i=2,nx-1 do
+        local wx=(vorticity[j][i+1]-vorticity[j][i-1])/(2*dx)
+        local wy=(vorticity[j+1][i]-vorticity[j-1][i])/(2*dy)
+        local lap=(vorticity[j][i+1]-2*vorticity[j][i]+vorticity[j][i-1])*idx2+(vorticity[j+1][i]-2*vorticity[j][i]+vorticity[j-1][i])*idy2
+        local forcing=source and source[j] and source[j][i] or 0
+        nextField[j][i]=vorticity[j][i]+dt*(-velocityX[j][i]*wx-velocityY[j][i]*wy+viscosity*lap+forcing)
+    end end
+    return nextField
 end
-function NavierStokes2D:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
+
+-- Central-difference divergence residual for a sampled velocity field.
+function Module.MaximumDivergence(velocityX,velocityY,dx,dy)
+    Num.Positive(dx,"x spacing"); Num.Positive(dy,"y spacing")
+    local maximum=0
+    for j=2,#velocityX-1 do for i=2,#velocityX[j]-1 do
+        local divergence=(velocityX[j][i+1]-velocityX[j][i-1])/(2*dx)+(velocityY[j+1][i]-velocityY[j-1][i])/(2*dy)
+        maximum=math.max(maximum,math.abs(divergence))
+    end end
+    return maximum
 end
-function NavierStokes2D.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function NavierStokes2D:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function NavierStokes2D:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function NavierStokes2D.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function NavierStokes2D.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function NavierStokes2D.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function NavierStokes2D.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function NavierStokes2D.MomentumTendency(velocity: {number}, pressureGradient: {number}, laplacianVelocity: {number}, density: number, viscosity: number, forcing: {number}?): {number}
-    validateVector(velocity)
-    validateVector(pressureGradient, #velocity)
-    validateVector(laplacianVelocity, #velocity)
-    assert(density > 0 and viscosity >= 0, "invalid fluid material parameters")
-    local out = table.create(#velocity)
-    for i=1,#velocity do
-        local advective = 0
-        for j=1,#velocity do advective += velocity[j] * (self.Configuration.VelocityGradient and self.Configuration.VelocityGradient[i] and self.Configuration.VelocityGradient[i][j] or 0) end
-        out[i] = -advective - pressureGradient[i]/density + viscosity*laplacianVelocity[i] + ((forcing and forcing[i]) or 0)
-    end
-    return out
-end
-return NavierStokes2D
+
+return Module

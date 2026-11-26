@@ -1,166 +1,47 @@
--- neo hookean material
-local NeoHookeanMaterial = {}
-NeoHookeanMaterial.__index = NeoHookeanMaterial
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- continuum-mechanics implementation for NeoHookeanMaterial
+-- Units: SI; small-strain formulas assume infinitesimal deformation, while finite-strain and hyperelastic routines use their explicitly named constitutive models.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.CauchyStress(F,shearModulus,bulkModulus)
+    Num.Positive(shearModulus,"shear modulus"); Num.Positive(bulkModulus,"bulk modulus")
+    local J=LA.Determinant(F); Num.Positive(J,"deformation Jacobian")
+    local B=LA.Multiply(F,LA.Transpose(F)); local scale=shearModulus/J
+    local stress=Num.Scale(Num.Subtract(B,LA.Identity(3)),scale)
+    local volumetric=bulkModulus*math.log(J)/J
+    for i=1,3 do stress[i][i]+=volumetric end
+    return stress
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+function Module.Energy(F,shearModulus,bulkModulus)
+    local J=LA.Determinant(F); Num.Positive(J,"deformation Jacobian")
+    local B=LA.Multiply(LA.Transpose(F),F); local I1=LA.Trace(B)
+    return 0.5*shearModulus*(I1-3)-shearModulus*math.log(J)+0.5*bulkModulus*math.log(J)^2
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
+
+
+-- First Piola-Kirchhoff stress for compressible neo-Hookean material:
+-- P = mu(F-F^-T)+lambda ln(J) F^-T, with J=det(F)>0.
+function Module.FirstPiola(deformationGradient, lameLambda, shearModulus)
+    assert(lameLambda>=0 and shearModulus>0,"invalid Lamé parameters")
+    local determinant=LA.Determinant(deformationGradient)
+    Num.Positive(determinant,"deformation Jacobian")
+    local inverseTranspose=LA.Transpose(LA.Inverse(deformationGradient))
+    local logarithm=math.log(determinant)
+    local elastic=LA.Scale(LA.Subtract(deformationGradient,inverseTranspose),shearModulus)
+    local volumetric=LA.Scale(inverseTranspose,lameLambda*logarithm)
+    return LA.Add(elastic,volumetric)
 end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
+
+-- Isochoric invariant I1_bar = J^(-2/3) tr(F^T F) in three dimensions.
+function Module.ModifiedFirstInvariant(deformationGradient)
+    local determinant=LA.Determinant(deformationGradient)
+    Num.Positive(determinant,"deformation Jacobian")
+    local rightCauchyGreen=LA.Multiply(LA.Transpose(deformationGradient),deformationGradient)
+    return determinant^(-2/3)*LA.Trace(rightCauchyGreen)
 end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function NeoHookeanMaterial.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, NeoHookeanMaterial)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function NeoHookeanMaterial:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
-    end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function NeoHookeanMaterial:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function NeoHookeanMaterial.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function NeoHookeanMaterial:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function NeoHookeanMaterial:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function NeoHookeanMaterial.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function NeoHookeanMaterial.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function NeoHookeanMaterial.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function NeoHookeanMaterial.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function NeoHookeanMaterial.SmallStrain(displacementGradient: {{number}}): {{number}}
-    assert(#displacementGradient>0 and #displacementGradient==#displacementGradient[1], "gradient must be square")
-    local n=#displacementGradient; local strain=table.create(n)
-    for i=1,n do
-        strain[i]=table.create(n)
-        for j=1,n do strain[i][j]=0.5*(displacementGradient[i][j]+displacementGradient[j][i]) end
-    end
-    return strain
-end
-return NeoHookeanMaterial
+
+return Module

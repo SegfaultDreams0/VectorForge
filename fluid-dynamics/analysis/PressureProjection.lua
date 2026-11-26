@@ -1,170 +1,63 @@
--- pressure projection
-local PressureProjection = {}
-PressureProjection.__index = PressureProjection
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- fluid-dynamics implementation for PressureProjection
+-- Units: SI for density, velocity, length, time, pressure, and viscosity; grid methods assume the stated dimensionality and require stable spacing and timestep choices.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.Divergence(u,v,dx,dy)
+    Num.Positive(dx,"dx"); Num.Positive(dy,"dy"); local rows=#u; local cols=#u[1]; local div=LA.Zeros(rows,cols)
+    for i=2,rows-1 do for j=2,cols-1 do div[i][j]=(u[i][j+1]-u[i][j-1])/(2*dx)+(v[i+1][j]-v[i-1][j])/(2*dy) end end
+    return div
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+function Module.Project(u,v,p,dt,rho,dx,dy)
+    Num.Positive(dt,"time step"); Num.Positive(rho,"density"); Num.Positive(dx,"dx"); Num.Positive(dy,"dy")
+    local rows=#u; local cols=#u[1]; assert(#v==rows and #p==rows,"grid dimensions mismatch")
+    local uc=LA.Copy(u); local vc=LA.Copy(v)
+    for i=2,rows-1 do for j=2,cols-1 do uc[i][j]-=dt/rho*(p[i][j+1]-p[i][j-1])/(2*dx); vc[i][j]-=dt/rho*(p[i+1][j]-p[i-1][j])/(2*dy) end end
+    return uc,vc
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function PressureProjection.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, PressureProjection)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function PressureProjection:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+
+
+-- Jacobi pressure solve for div(grad(p)) = rho/dt * div(u*), with zero-mean gauge.
+-- Grid is a uniform interior Cartesian array; homogeneous Neumann boundary closure is used.
+function Module.SolvePressureJacobi(divergence, dx, dy, density, dt, iterations, tolerance)
+    Num.Positive(dx, "x spacing"); Num.Positive(dy, "y spacing")
+    Num.Positive(density, "density"); Num.Positive(dt, "time step")
+    local ny = #divergence
+    assert(ny >= 3 and #divergence[1] >= 3, "pressure grid must be at least 3 by 3")
+    local nx = #divergence[1]
+    for j = 1, ny do assert(#divergence[j] == nx, "divergence grid must be rectangular") end
+    local pressure, nextPressure = table.create(ny), table.create(ny)
+    local rhsMean = 0
+    for j=1,ny do
+        pressure[j]=table.create(nx,0); nextPressure[j]=table.create(nx,0)
+        for i=1,nx do rhsMean += divergence[j][i] end
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function PressureProjection:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
+    rhsMean /= nx*ny
+    local ax, ay = 1/(dx*dx), 1/(dy*dy)
+    local denominator = 2*(ax+ay)
+    local rhsScale = density/dt
+    local maxResidual = math.huge
+    for iteration=1,(iterations or 500) do
+        maxResidual=0
+        for j=2,ny-1 do for i=2,nx-1 do
+            local compatibleRhs = divergence[j][i] - rhsMean
+            nextPressure[j][i] = ((pressure[j][i+1]+pressure[j][i-1])*ax + (pressure[j+1][i]+pressure[j-1][i])*ay - rhsScale*compatibleRhs)/denominator
+            maxResidual=math.max(maxResidual,math.abs(nextPressure[j][i]-pressure[j][i]))
+        end end
+        for j=1,ny do nextPressure[j][1]=nextPressure[j][2]; nextPressure[j][nx]=nextPressure[j][nx-1] end
+        for i=1,nx do nextPressure[1][i]=nextPressure[2][i]; nextPressure[ny][i]=nextPressure[ny-1][i] end
+        local meanPressure = 0
+        for j=1,ny do for i=1,nx do meanPressure += nextPressure[j][i] end end
+        meanPressure /= nx*ny
+        for j=1,ny do for i=1,nx do nextPressure[j][i] -= meanPressure end end
+        pressure,nextPressure=nextPressure,pressure
+        if maxResidual <= (tolerance or 1e-8) then return pressure,{Converged=true,Iterations=iteration,UpdateNorm=maxResidual,RHSMeanRemoved=rhsMean} end
     end
-    self.Time += duration
-    self.Iterations += 1
-    return x
+    return pressure,{Converged=false,Iterations=iterations or 500,UpdateNorm=maxResidual,RHSMeanRemoved=rhsMean}
 end
-function PressureProjection.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function PressureProjection:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function PressureProjection:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function PressureProjection.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function PressureProjection.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function PressureProjection.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function PressureProjection.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function PressureProjection.MomentumTendency(velocity: {number}, pressureGradient: {number}, laplacianVelocity: {number}, density: number, viscosity: number, forcing: {number}?): {number}
-    validateVector(velocity)
-    validateVector(pressureGradient, #velocity)
-    validateVector(laplacianVelocity, #velocity)
-    assert(density > 0 and viscosity >= 0, "invalid fluid material parameters")
-    local out = table.create(#velocity)
-    for i=1,#velocity do
-        local advective = 0
-        for j=1,#velocity do advective += velocity[j] * (self.Configuration.VelocityGradient and self.Configuration.VelocityGradient[i] and self.Configuration.VelocityGradient[i][j] or 0) end
-        out[i] = -advective - pressureGradient[i]/density + viscosity*laplacianVelocity[i] + ((forcing and forcing[i]) or 0)
-    end
-    return out
-end
-return PressureProjection
+
+return Module

@@ -1,10 +1,16 @@
--- integration tolerance
-local M = {}
-function M.new(absolute,relative)
-    assert(absolute > 0 and relative > 0, "tolerances must be positive")
-    return {Absolute=absolute,Relative=relative}
+-- differential-equations implementation for IntegrationTolerance
+-- Assumptions: state components retain caller-defined physical units; integration routines require consistent time units, valid initial data, and method-appropriate step sizes.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.ErrorScale(absolute,relative,reference)
+    Num.Positive(absolute,"absolute tolerance"); Num.Positive(relative,"relative tolerance")
+    return absolute+relative*math.abs(reference)
 end
-function M.ErrorScale(tolerance,reference)
-    return tolerance.Absolute+tolerance.Relative*math.abs(reference)
+function Module.Accept(error,absolute,relative,reference)
+    return math.abs(error)<=Module.ErrorScale(absolute,relative,reference)
 end
-return M
+
+return Module

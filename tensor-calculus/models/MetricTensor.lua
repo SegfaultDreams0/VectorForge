@@ -1,166 +1,66 @@
--- metric tensor
-local MetricTensor = {}
-MetricTensor.__index = MetricTensor
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- tensor-calculus implementation for MetricTensor
+-- Assumptions: tensor indices use the documented upper/lower convention; metric-based routines require a symmetric non-singular metric; coordinate units are caller-defined.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.Validate(metric,tol)
+    local rows,cols=LA.Dimensions(metric); assert(rows==cols,"metric must be square")
+    assert(LA.FrobeniusNorm(Num.Subtract(metric,LA.Transpose(metric)))<=(tol or 1e-10),"metric must be symmetric")
+    assert(LA.Determinant(metric)>0,"metric must have positive determinant")
+    assert(LA.Cholesky(metric)~=nil,"metric must be positive definite")
+    return true
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+function Module.RaiseIndex(metric,covector)
+    Module.Validate(metric)
+    return LA.MatrixVector(LA.Inverse(metric),covector)
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
+function Module.LowerIndex(metric,vector)
+    Module.Validate(metric)
+    return LA.MatrixVector(metric,vector)
 end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
+
+
+-- Metric volume density: sqrt(det(g)); valid for positive-definite Riemannian metrics.
+function Module.VolumeDensity(metric)
+    Module.Validate(metric)
+    local determinant = LA.Determinant(metric)
+    assert(determinant > 0, "metric determinant must be positive")
+    return math.sqrt(determinant)
 end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
+
+-- Metric inner product: <u,v>_g = u^T g v.
+function Module.InnerProduct(metric, u, v)
+    Module.Validate(metric)
+    assert(#u == #metric and #v == #metric, "metric inner-product dimension mismatch")
+    local gv = LA.MatrixVector(metric, v)
+    return LA.Dot(u, gv)
 end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
+
+-- Return the metric inverse through the core factorization/solve API.
+function Module.Inverse(metric)
+    Module.Validate(metric)
+    local inverse, reason = LA.Inverse(metric)
+    assert(inverse ~= nil, reason or "metric inversion failed")
+    local identityResidual = LA.FrobeniusNorm(LA.Subtract(LA.Multiply(metric, inverse), LA.Identity(#metric)))
+    return inverse, identityResidual
 end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function MetricTensor.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, MetricTensor)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function MetricTensor:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
-    end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function MetricTensor:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function MetricTensor.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function MetricTensor:GetDiagnostics()
+
+-- Check positive definiteness and symmetry separately for useful diagnostics.
+function Module.Diagnostics(metric, tolerance)
+    local tol = tolerance or 1e-10
+    local symmetryResidual = LA.FrobeniusNorm(LA.Subtract(metric, LA.Transpose(metric)))
+    local determinant = LA.Determinant(metric)
+    local factor = LA.Cholesky(metric)
     return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
+        SymmetryResidual = symmetryResidual,
+        Determinant = determinant,
+        PositiveDefinite = factor ~= nil,
+        Valid = symmetryResidual <= tol and determinant > 0 and factor ~= nil,
     }
 end
-function MetricTensor:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function MetricTensor.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function MetricTensor.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function MetricTensor.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function MetricTensor.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function MetricTensor.FrobeniusContraction(A: {{number}}, B: {{number}}): number
-    assert(#A==#B and #A>0, "tensor dimensions mismatch")
-    local total=0
-    for i=1,#A do
-        assert(#A[i]==#B[i], "tensor row dimensions mismatch")
-        for j=1,#A[i] do total += A[i][j]*B[i][j] end
-    end
-    return total
-end
-return MetricTensor
+
+return Module

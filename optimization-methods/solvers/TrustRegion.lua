@@ -1,169 +1,43 @@
--- trust region
-local TrustRegion = {}
-TrustRegion.__index = TrustRegion
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- optimization-methods implementation for TrustRegion
+-- Assumptions: objective and parameter scaling are problem-defined; gradient and Hessian methods assume differentiable objectives where required.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.CauchyStep(gradient,hessian,radius)
+    Num.Positive(radius,"trust-region radius"); local gg=LA.Dot(gradient,gradient); Num.Positive(gg,"gradient norm squared")
+    local Bg=LA.MatrixVector(hessian,gradient); local curvature=LA.Dot(gradient,Bg)
+    local alpha=if curvature<=0 then radius/math.sqrt(gg) else math.min(gg/curvature,radius/math.sqrt(gg))
+    return Num.Scale(gradient,-alpha)
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+function Module.UpdateRadius(radius,actualReduction,predictedReduction)
+    Num.Positive(radius,"trust-region radius"); assert(predictedReduction>0,"predicted reduction must be positive")
+    local ratio=actualReduction/predictedReduction
+    if ratio<0.25 then return 0.25*radius elseif ratio>0.75 then return math.min(2*radius,1e6) else return radius end
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
+
+
+-- Actual/predicted reduction ratio for a trust-region trial point.
+function Module.ReductionRatio(currentCost,trialCost,gradient,step,hessian)
+    local predicted=-(LA.Dot(gradient,step)+0.5*LA.Dot(step,LA.MatrixVector(hessian,step)))
+    assert(predicted>0,"trust-region model must predict positive reduction")
+    local actual=currentCost-trialCost
+    return actual/predicted,actual,predicted
 end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
+
+-- Accept or reject a trial and update radius according to standard ratio thresholds.
+function Module.AcceptTrial(ratio,radius,stepNorm,eta1,eta2,shrink,grow)
+    Num = Num or require(game:GetService("ReplicatedStorage"):WaitForChild("VectorForgeShared"):WaitForChild("NumericalKernels"))
+    Num.Positive(radius,"trust-region radius")
+    local low,high=eta1 or 0.25,eta2 or 0.75
+    assert(low>=0 and high>low,"invalid acceptance thresholds")
+    local newRadius=radius
+    if ratio<low then newRadius=radius*(shrink or 0.25)
+    elseif ratio>high and stepNorm>=0.9*radius then newRadius=radius*(grow or 2) end
+    return ratio>low,newRadius
 end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function TrustRegion.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, TrustRegion)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function TrustRegion:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
-    end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function TrustRegion:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function TrustRegion.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function TrustRegion:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function TrustRegion:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function TrustRegion.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function TrustRegion.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function TrustRegion.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function TrustRegion.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function TrustRegion.ArmijoLineSearch(x: {number}, direction: {number}, gradient: {number}, objective: ({number})->number, alpha: number?, c: number?, shrink: number?): number
-    validateVector(x); validateVector(direction,#x); validateVector(gradient,#x)
-    local a=alpha or 1; local armijo=c or 1e-4; local beta=shrink or 0.5
-    local fx=objective(x); local slope=dot(gradient,direction)
-    assert(slope<0, "direction must be a descent direction")
-    for _=1,60 do
-        local candidate=add(x,scale(direction,a))
-        if objective(candidate)<=fx+armijo*a*slope then return a end
-        a*=beta
-    end
-    return 0
-end
-return TrustRegion
+
+return Module

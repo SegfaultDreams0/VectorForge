@@ -1,162 +1,41 @@
--- van der waals eos
-local VanDerWaalsEOS = {}
-VanDerWaalsEOS.__index = VanDerWaalsEOS
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- thermodynamics implementation for VanDerWaalsEOS
+-- Units: temperature K, pressure Pa, volume m^3, amount mol, energy J, heat capacity J/(mol K); model assumptions are stated by each equation (ideal, real-gas, or cycle model).
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local Constants = require(Shared:WaitForChild("Constants"))
+
+local Module = {}
+function Module.Pressure(n,T,V,a,b)
+    Num.Nonnegative(n,"moles"); Num.Positive(T,"temperature"); Num.Positive(V,"volume"); Num.Nonnegative(a,"attraction parameter"); Num.Nonnegative(b,"covolume")
+    assert(V>n*b,"volume must exceed n*b")
+    return n*Constants.R*T/(V-n*b)-a*n*n/(V*V)
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+
+
+-- Critical constants for one mole: Tc=8a/(27Rb), Pc=a/(27b^2), Vc=3b.
+function Module.CriticalPoint(a, b, gasConstant)
+    Num.Positive(a, "attraction parameter"); Num.Positive(b, "co-volume parameter")
+    local R = gasConstant or Constants.R
+    Num.Positive(R, "gas constant")
+    return {Temperature = 8 * a / (27 * R * b), Pressure = a / (27 * b * b), MolarVolume = 3 * b}
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
+
+-- Analytic pressure derivatives at fixed n and T/V variables.
+function Module.Derivatives(n, temperature, volume, a, b, gasConstant)
+    Num.Positive(n, "amount"); Num.Positive(temperature, "temperature"); Num.Positive(volume, "volume")
+    assert(a >= 0 and b >= 0 and volume > n * b, "state must satisfy V > n b and nonnegative a,b")
+    local R = gasConstant or Constants.R
+    local dpdT = n * R / (volume - n * b)
+    local dpdV = -n * R * temperature / ((volume - n * b) ^ 2) + 2 * a * n * n / (volume ^ 3)
+    return dpdT, dpdV
 end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
+
+-- Compressibility factor Z = PV/(nRT), a useful dimensionless state diagnostic.
+function Module.CompressibilityFactor(n, temperature, volume, a, b, gasConstant)
+    local pressure = Module.Pressure(n, temperature, volume, a, b, gasConstant)
+    local R = gasConstant or Constants.R
+    return pressure * volume / (n * R * temperature)
 end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function VanDerWaalsEOS.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, VanDerWaalsEOS)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function VanDerWaalsEOS:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
-    end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function VanDerWaalsEOS:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function VanDerWaalsEOS.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function VanDerWaalsEOS:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function VanDerWaalsEOS:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function VanDerWaalsEOS.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function VanDerWaalsEOS.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function VanDerWaalsEOS.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function VanDerWaalsEOS.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function VanDerWaalsEOS.IdealGasPressure(moles: number, temperature: number, volume: number, gasConstant: number?): number
-    local R=gasConstant or 8.314462618
-    assert(moles>=0 and temperature>=0 and volume>0 and R>0, "invalid ideal-gas state")
-    return moles*R*temperature/volume
-end
-return VanDerWaalsEOS
+
+return Module

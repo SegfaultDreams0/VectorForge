@@ -1,10 +1,13 @@
--- controller tuning
-local M = {}
-function M.PID(kp,ki,kd,limit)
-    assert(limit > 0, "output limit must be positive")
-    return {Kp=kp,Ki=ki,Kd=kd,OutputLimit=limit,IntegralLimit=limit}
+-- control-systems implementation for ControllerTuning
+-- Assumptions: vectors and matrices use numeric arrays; time and signal units follow the modeled plant; discrete-time methods require a positive sample interval.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.PID(kp,ki,kd,outputLimit)
+    assert(kp>=0 and ki>=0 and kd>=0,"PID gains must be nonnegative"); Num.Positive(outputLimit,"output limit")
+    return {Kp=kp,Ki=ki,Kd=kd,OutputLimit=outputLimit}
 end
-function M.ClampOutput(value, limit)
-    return math.max(-limit, math.min(limit,value))
-end
-return M
+
+return Module

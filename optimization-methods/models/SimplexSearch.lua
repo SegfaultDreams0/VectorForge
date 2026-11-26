@@ -1,169 +1,64 @@
--- simplex search
-local SimplexSearch = {}
-SimplexSearch.__index = SimplexSearch
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
-end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function SimplexSearch.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, SimplexSearch)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function SimplexSearch:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+-- optimization-methods implementation for SimplexSearch
+-- Assumptions: objective and parameter scaling are problem-defined; gradient and Hessian methods assume differentiable objectives where required.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+
+function Module.NelderMeadStep(simplex, objective, reflection, expansion, contraction, shrink)
+    assert(type(simplex) == "table" and #simplex >= 2, "simplex must contain at least two vertices")
+    assert(type(objective) == "function", "objective must be callable")
+    local dimension = #simplex[1]
+    assert(dimension >= 1 and #simplex == dimension + 1, "an n-dimensional simplex must contain n+1 vertices")
+    local alpha, gamma = reflection or 1, expansion or 2
+    local rho, sigma = contraction or 0.5, shrink or 0.5
+    assert(alpha > 0 and gamma > 1 and rho > 0 and rho < 1 and sigma > 0 and sigma < 1, "invalid Nelder-Mead coefficients")
+
+    local scored = table.create(#simplex)
+    for i = 1, #simplex do
+        assert(#simplex[i] == dimension, "simplex vertices must have equal dimensions")
+        scored[i] = {Point = table.clone(simplex[i]), Value = objective(simplex[i])}
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function SimplexSearch:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
+    table.sort(scored, function(a, b) return a.Value < b.Value end)
+
+    local centroid = table.create(dimension, 0)
+    for i = 1, dimension do
+        centroid = Num.Add(centroid, Num.Scale(scored[i].Point, 1 / dimension))
     end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function SimplexSearch.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
+
+    local worst = scored[#scored].Point
+    local reflected = Num.Add(centroid, Num.Scale(Num.Subtract(centroid, worst), alpha))
+    local reflectedValue = objective(reflected)
+    local replacement
+
+    if reflectedValue < scored[1].Value then
+        local expanded = Num.Add(centroid, Num.Scale(Num.Subtract(reflected, centroid), gamma))
+        replacement = if objective(expanded) < reflectedValue then expanded else reflected
+    elseif reflectedValue < scored[dimension].Value then
+        replacement = reflected
+    else
+        local outside = reflectedValue < scored[#scored].Value
+        local contracted = if outside
+            then Num.Add(centroid, Num.Scale(Num.Subtract(reflected, centroid), rho))
+            else Num.Add(centroid, Num.Scale(Num.Subtract(worst, centroid), rho))
+        local contractedValue = objective(contracted)
+        if (outside and contractedValue <= reflectedValue) or (not outside and contractedValue < scored[#scored].Value) then
+            replacement = contracted
+        else
+            local nextSimplex = table.create(#scored)
+            nextSimplex[1] = scored[1].Point
+            for i = 2, #scored do
+                nextSimplex[i] = Num.Add(scored[1].Point, Num.Scale(Num.Subtract(scored[i].Point, scored[1].Point), sigma))
+            end
+            return nextSimplex
+        end
     end
-    return J
+
+    local nextSimplex = table.create(#scored)
+    for i = 1, dimension do nextSimplex[i] = scored[i].Point end
+    nextSimplex[#scored] = replacement
+    return nextSimplex
 end
-function SimplexSearch:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function SimplexSearch:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function SimplexSearch.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function SimplexSearch.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function SimplexSearch.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function SimplexSearch.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function SimplexSearch.ArmijoLineSearch(x: {number}, direction: {number}, gradient: {number}, objective: ({number})->number, alpha: number?, c: number?, shrink: number?): number
-    validateVector(x); validateVector(direction,#x); validateVector(gradient,#x)
-    local a=alpha or 1; local armijo=c or 1e-4; local beta=shrink or 0.5
-    local fx=objective(x); local slope=dot(gradient,direction)
-    assert(slope<0, "direction must be a descent direction")
-    for _=1,60 do
-        local candidate=add(x,scale(direction,a))
-        if objective(candidate)<=fx+armijo*a*slope then return a end
-        a*=beta
-    end
-    return 0
-end
-return SimplexSearch
+
+return Module

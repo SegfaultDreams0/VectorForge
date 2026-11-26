@@ -1,165 +1,67 @@
--- density matrix
-local DensityMatrix = {}
-DensityMatrix.__index = DensityMatrix
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
-end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function DensityMatrix.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, DensityMatrix)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function DensityMatrix:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Constants = require(Shared:WaitForChild("Constants"))
+-- quantum-mechanics implementation for DensityMatrix
+-- Assumptions: non-relativistic single-particle equations unless named otherwise; SI units are used for mass, length, time, and energy; wavefunction normalization follows the supplied grid convention.
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.PureState(psi)
+    local norm2=0; for _,z in ipairs(psi) do norm2+=Num.ComplexAbs2(z) end
+    Num.Positive(norm2,"wavefunction norm")
+    local rho=table.create(#psi)
+    for i=1,#psi do
+        rho[i]=table.create(#psi)
+        for j=1,#psi do
+            local product=Num.ComplexMul(psi[i],{Re=psi[j].Re,Im=-psi[j].Im})
+            rho[i][j]={Re=product.Re/norm2,Im=product.Im/norm2}
+        end
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
+    return rho
 end
-function DensityMatrix:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
+
+
+-- Purity Tr(rho^2), equal to one for pure states and below one for mixed states.
+function Module.Purity(rho)
+    local n = #rho
+    assert(n > 0 and n == #rho[1], "density matrix must be square")
+    local traceReal,traceImaginary=0,0
+    for i=1,n do
+        for j=1,n do
+            local left,right=rho[i][j],rho[j][i]
+            local product=Num.ComplexMul(left,right)
+            traceReal+=product.Re
+            traceImaginary+=product.Im
+        end
     end
-    self.Time += duration
-    self.Iterations += 1
-    return x
+    assert(math.abs(traceImaginary)<=1e-9,"density purity has a non-negligible imaginary part")
+    return traceReal
 end
-function DensityMatrix.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
+
+-- Hermiticity residual ||rho-rho^dagger||_F for complex density matrices.
+function Module.HermiticityResidual(rho)
+    assert(#rho > 0 and #rho == #rho[1], "density matrix must be square")
+    local sum=0
+    for i=1,#rho do for j=1,#rho do
+        local differenceRe=rho[i][j].Re-rho[j][i].Re
+        local differenceIm=rho[i][j].Im+rho[j][i].Im
+        sum+=differenceRe*differenceRe+differenceIm*differenceIm
+    end end
+    return math.sqrt(sum)
+end
+
+-- Von Neumann entropy for a supplied nonnegative eigenvalue spectrum.
+function Module.EntropyFromEigenvalues(eigenvalues, boltzmannConstant)
+    local kB = boltzmannConstant or Constants.K_B
+    Num.Positive(kB, "Boltzmann constant")
+    local sum, probabilitySum = 0, 0
+    for _, probability in ipairs(eigenvalues) do
+        assert(probability >= -1e-12 and probability <= 1 + 1e-12, "density eigenvalues must lie in [0,1]")
+        probabilitySum += probability
+        if probability > 0 then sum -= kB * probability * math.log(probability) end
     end
-    return J
+    assert(math.abs(probabilitySum - 1) <= 1e-8, "density eigenvalues must sum to one")
+    return sum
 end
-function DensityMatrix:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function DensityMatrix:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function DensityMatrix.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function DensityMatrix.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function DensityMatrix.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function DensityMatrix.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function DensityMatrix.ProbabilityDensity(realPart: {number}, imaginaryPart: {number}): {number}
-    validateVector(realPart); validateVector(imaginaryPart,#realPart)
-    local density=table.create(#realPart); local total=0
-    for i=1,#realPart do density[i]=realPart[i]^2+imaginaryPart[i]^2; total+=density[i] end
-    assert(total>EPS, "zero wavefunction cannot be normalized")
-    for i=1,#density do density[i]/=total end
-    return density
-end
-return DensityMatrix
+
+return Module

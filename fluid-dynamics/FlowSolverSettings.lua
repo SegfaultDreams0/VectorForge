@@ -1,11 +1,18 @@
--- flow solver settings
-local M = {}
-function M.new()
-    return {TimeStep=1/240, Density=1, Viscosity=0.01, PressureIterations=80, Tolerance=1e-7, Relaxation=0.8}
-end
-function M.Validate(c)
-    assert(c.TimeStep > 0 and c.Density > 0 and c.Viscosity >= 0, "invalid flow settings")
-    assert(c.PressureIterations >= 1 and c.Tolerance > 0, "invalid solver controls")
+-- fluid-dynamics implementation for FlowSolverSettings
+-- Units: SI for density, velocity, length, time, pressure, and viscosity; grid methods assume the stated dimensionality and require stable spacing and timestep choices.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.Validate(settings)
+    Num.Positive(settings.TimeStep,"time step"); Num.Positive(settings.Density,"density"); Num.Nonnegative(settings.Viscosity,"viscosity")
+    assert(settings.CourantLimit>0 and settings.CourantLimit<=1,"Courant limit must be in (0,1]")
     return true
 end
-return M
+function Module.StableTimeStep(cfl,dx,maxSpeed)
+    assert(cfl>0 and cfl<=1,"CFL must be in (0,1]"); Num.Positive(dx,"grid spacing"); Num.Positive(maxSpeed,"maximum speed")
+    return cfl*dx/maxSpeed
+end
+
+return Module

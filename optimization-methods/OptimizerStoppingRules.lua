@@ -1,10 +1,9 @@
--- optimizer stopping rules
-local M = {}
-function M.new(gradientTolerance,stepTolerance,maxIterations)
-    assert(gradientTolerance > 0 and stepTolerance > 0 and maxIterations >= 1, "invalid stopping rules")
-    return {GradientTolerance=gradientTolerance,StepTolerance=stepTolerance,MaxIterations=maxIterations}
+-- optimization-methods implementation for OptimizerStoppingRules
+-- Assumptions: objective and parameter scaling are problem-defined; gradient and Hessian methods assume differentiable objectives where required.
+
+local Module = {}
+function Module.ShouldStop(gradientNorm,stepNorm,iteration,settings)
+    return gradientNorm<=settings.GradientTolerance or stepNorm<=settings.StepTolerance or iteration>=settings.MaxIterations
 end
-function M.ShouldStop(gradientNorm,stepNorm,iteration,settings)
-    return gradientNorm <= settings.GradientTolerance or stepNorm <= settings.StepTolerance or iteration >= settings.MaxIterations
-end
-return M
+
+return Module

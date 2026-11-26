@@ -1,7 +1,16 @@
--- electromagnetic constants
-local M = {}
-M.SpeedOfLight = 299792458
-M.VacuumPermeability = 1.25663706127e-6
-M.VacuumPermittivity = 1/(M.VacuumPermeability*M.SpeedOfLight^2)
-M.ElementaryCharge = 1.602176634e-19
-return M
+-- electromagnetics implementation for ElectromagneticConstants
+-- Units: SI (m, s, kg, A, V, T); vacuum constants come from shared/Constants.lua unless material parameters are explicitly supplied.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local Constants = require(Shared:WaitForChild("Constants"))
+
+local Module = {}
+function Module.WaveImpedance(epsilon,mu)
+    Num.Positive(epsilon,"permittivity"); Num.Positive(mu,"permeability"); return math.sqrt(mu/epsilon)
+end
+function Module.Wavelength(frequency)
+    Num.Positive(frequency,"frequency"); return Constants.C/frequency
+end
+
+return Module

@@ -1,7 +1,12 @@
--- thermodynamic conversions
-local M = {}
-function M.CelsiusToKelvin(c) return c+273.15 end
-function M.KelvinToCelsius(k) assert(k >= 0, "temperature below absolute zero"); return k-273.15 end
-function M.PascalToBar(p) return p/100000 end
-function M.BarToPascal(p) return p*100000 end
-return M
+-- thermodynamics implementation for ThermodynamicConversions
+-- Units: temperature K, pressure Pa, volume m^3, amount mol, energy J, heat capacity J/(mol K); model assumptions are stated by each equation (ideal, real-gas, or cycle model).
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.CelsiusToKelvin(c) assert(c>=-273.15,"below absolute zero"); return c+273.15 end
+function Module.PascalToBar(p) Num.Nonnegative(p,"pressure"); return p/1e5 end
+function Module.BarToPascal(p) Num.Nonnegative(p,"pressure"); return p*1e5 end
+
+return Module

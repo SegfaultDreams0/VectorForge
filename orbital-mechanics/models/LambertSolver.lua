@@ -1,162 +1,91 @@
--- lambert solver
-local LambertSolver = {}
-LambertSolver.__index = LambertSolver
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
-end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function LambertSolver.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, LambertSolver)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function LambertSolver:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+-- orbital-mechanics implementation for LambertSolver
+-- Units: SI (m, s, kg); central-body dynamics use Newtonian point-mass gravity, with perturbations included only in the named methods.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+
+function Module.ZeroRevolution(r1, r2, deltaTime, mu, prograde)
+    Num.Positive(deltaTime, "transfer time")
+    Num.Positive(mu, "gravitational parameter")
+    assert(#r1 == 3 and #r2 == 3, "position vectors must have three components")
+    local r1n, r2n = LA.Norm(r1), LA.Norm(r2)
+    Num.Positive(r1n, "initial radius")
+    Num.Positive(r2n, "final radius")
+    local cosine = math.max(-1, math.min(1, LA.Dot(r1, r2) / (r1n * r2n)))
+    local cross = Num.Cross3(r1, r2)
+    assert(math.abs(cross[3]) > 1e-12, "transfer plane must define a non-ambiguous reference-z direction")
+    local sineMagnitude = LA.Norm(cross) / (r1n * r2n)
+    local sine = sineMagnitude
+    if (prograde ~= false and cross[3] < 0) or (prograde == false and cross[3] > 0) then
+        sine = -sineMagnitude
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function LambertSolver:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
+    local denominator = 1 - cosine
+    Num.Positive(denominator, "Lambert transfer geometry")
+    local A = sine * math.sqrt(r1n * r2n / denominator)
+    assert(math.abs(A) > 1e-12, "Lambert geometry is singular")
+
+    local function evaluate(z)
+        local C = Num.StumpffC(z)
+        local S = Num.StumpffS(z)
+        if C <= 0 then return nil, math.huge end
+        local y = r1n + r2n + A * (z * S - 1) / math.sqrt(C)
+        if y <= 0 then return y, math.huge end
+        local time = ((y / C) ^ 1.5 * S + A * math.sqrt(y)) / math.sqrt(mu)
+        return y, time
     end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function LambertSolver.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
+
+    local lo, hi = 0, 0
+    local _, timeAtZero = evaluate(0)
+    if timeAtZero > deltaTime then
+        hi = 0
+        lo = -1
+        local _, tlo = evaluate(lo)
+        local expansions = 0
+        while tlo > deltaTime and expansions < 80 do
+            lo *= 2
+            _, tlo = evaluate(lo)
+            expansions += 1
+        end
+        assert(tlo <= deltaTime, "could not bracket a hyperbolic Lambert solution")
+    else
+        lo = 0
+        hi = 1
+        local _, thi = evaluate(hi)
+        local upperLimit = (2 * math.pi) ^ 2 - 1e-7
+        while (thi < deltaTime or thi == math.huge) and hi < upperLimit do
+            hi = math.min(2 * hi, upperLimit)
+            _, thi = evaluate(hi)
+            if thi == math.huge and hi >= upperLimit then break end
+        end
+        assert(thi >= deltaTime and thi < math.huge, "could not bracket an elliptic Lambert solution")
     end
-    return J
-end
-function LambertSolver:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function LambertSolver:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function LambertSolver.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
+
+    local z, y = 0, 0
+    for _ = 1, 120 do
+        z = 0.5 * (lo + hi)
+        local transferTime
+        y, transferTime = evaluate(z)
+        if transferTime > deltaTime then
+            hi = z
+        else
+            lo = z
+        end
+        if math.abs(transferTime - deltaTime) <= 1e-10 * math.max(deltaTime, 1) then break end
     end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
+
+    local _, solvedTime = evaluate(z)
+    assert(math.abs(solvedTime - deltaTime) <= 1e-7 * math.max(deltaTime, 1), "Lambert universal-variable iteration did not converge")
+    local f = 1 - y / r1n
+    local g = A * math.sqrt(y / mu)
+    local gdot = 1 - y / r2n
+    assert(math.abs(g) > 1e-12, "Lambert Lagrange coefficient is singular")
+    local v1 = Num.Scale(Num.Subtract(r2, Num.Scale(r1, f)), 1 / g)
+    local v2 = Num.Scale(Num.Subtract(Num.Scale(r2, gdot), r1), 1 / g)
+    return v1, v2, {UniversalVariable = z, TransferTime = solvedTime}
 end
-function LambertSolver.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function LambertSolver.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function LambertSolver.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function LambertSolver.TwoBodyAcceleration(position: {number}, gravitationalParameter: number): {number}
-    validateVector(position,3); assert(gravitationalParameter>0, "mu must be positive")
-    local radius=norm(position); assert(radius>EPS, "position cannot be zero")
-    return scale(position,-gravitationalParameter/(radius^3))
-end
-return LambertSolver
+
+return Module

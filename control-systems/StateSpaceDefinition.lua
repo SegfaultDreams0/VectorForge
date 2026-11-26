@@ -1,11 +1,15 @@
--- state space definition
-local M = {}
-function M.new(A,B,C,D)
-    assert(#A > 0 and #A == #B and #C > 0 and #C == #D, "state space dimensions mismatch")
-    return {A=A,B=B,C=C,D=D,StateDimension=#A,OutputDimension=#C,InputDimension=#B[1]}
+-- control-systems implementation for StateSpaceDefinition
+-- Assumptions: vectors and matrices use numeric arrays; time and signal units follow the modeled plant; discrete-time methods require a positive sample interval.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.Validate(A,B,C,D)
+    local n,m=LA.Dimensions(A); assert(n==m,"A must be square")
+    assert(#B==n and #C[1]==n and #D==#C,"state-space matrix dimensions inconsistent")
+    assert(#B[1]==#D[1],"B and D input dimensions mismatch")
+    return {States=n,Inputs=#B[1],Outputs=#C}
 end
-function M.Validate(model)
-    assert(#model.A == model.StateDimension and #model.B == model.StateDimension, "invalid state matrices")
-    return true
-end
-return M
+
+return Module

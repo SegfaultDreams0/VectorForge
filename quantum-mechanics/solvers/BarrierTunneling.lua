@@ -1,165 +1,49 @@
--- barrier tunneling
-local BarrierTunneling = {}
-BarrierTunneling.__index = BarrierTunneling
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
-end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function BarrierTunneling.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, BarrierTunneling)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function BarrierTunneling:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+-- quantum-mechanics implementation for BarrierTunneling
+-- Assumptions: non-relativistic single-particle equations unless named otherwise; SI units are used for mass, length, time, and energy; wavefunction normalization follows the supplied grid convention.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local Constants = require(Shared:WaitForChild("Constants"))
+
+local Module = {}
+function Module.Transmission(E,V0,width,mass,hbar)
+    Num.Positive(E,"particle energy"); Num.Positive(V0,"barrier height"); Num.Positive(width,"barrier width"); Num.Positive(mass,"mass"); hbar=hbar or Constants.HBAR
+    if math.abs(E-V0)<=1e-12*math.max(E,V0) then
+        return 1/(1+mass*V0*width*width/(2*hbar*hbar))
+    elseif E>V0 then
+        local k2=math.sqrt(2*mass*(E-V0))/hbar
+        local denominator=1+(V0*V0*math.sin(k2*width)^2)/(4*E*(E-V0))
+        return 1/denominator
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
+    local kappa=math.sqrt(2*mass*(V0-E))/hbar
+    local denominator=1+(V0*V0*math.sinh(kappa*width)^2)/(4*E*(V0-E))
+    return 1/denominator
 end
-function BarrierTunneling:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
+
+
+-- Log-domain under-barrier transmission prevents overflow for thick barriers.
+-- T = [1 + V0^2 sinh^2(kappa a)/(4 E (V0-E))]^-1, kappa=sqrt(2m(V0-E))/hbar.
+function Module.LogTransmission(E, V0, width, mass, hbar)
+    Num.Positive(E, "particle energy"); Num.Positive(V0, "barrier height")
+    Num.Positive(width, "barrier width"); Num.Positive(mass, "particle mass")
+    local h = hbar or Constants.HBAR
+    Num.Positive(h, "reduced Planck constant")
+    if E >= V0 then
+        local transmission = Module.Transmission(E, V0, width, mass, h)
+        return math.log(math.max(transmission, 1e-300))
     end
-    self.Time += duration
-    self.Iterations += 1
-    return x
+    local kappa = math.sqrt(2 * mass * (V0 - E)) / h
+    local x = kappa * width
+    local logSinh
+    if x < 20 then logSinh = math.log(math.sinh(x)) else logSinh = x - math.log(2) + math.log(1 - math.exp(-2*x)) end
+    local logTerm = 2 * math.log(V0) + 2 * logSinh - math.log(4 * E * (V0 - E))
+    local logDenominator = math.max(0, logTerm) + math.log(1 + math.exp(-math.abs(logTerm)))
+    return -logDenominator
 end
-function BarrierTunneling.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
+
+function Module.Reflection(E, V0, width, mass, hbar)
+    local transmission = Module.Transmission(E, V0, width, mass, hbar)
+    return 1 - transmission
 end
-function BarrierTunneling:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function BarrierTunneling:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function BarrierTunneling.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function BarrierTunneling.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function BarrierTunneling.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function BarrierTunneling.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function BarrierTunneling.ProbabilityDensity(realPart: {number}, imaginaryPart: {number}): {number}
-    validateVector(realPart); validateVector(imaginaryPart,#realPart)
-    local density=table.create(#realPart); local total=0
-    for i=1,#realPart do density[i]=realPart[i]^2+imaginaryPart[i]^2; total+=density[i] end
-    assert(total>EPS, "zero wavefunction cannot be normalized")
-    for i=1,#density do density[i]/=total end
-    return density
-end
-return BarrierTunneling
+
+return Module

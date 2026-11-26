@@ -1,162 +1,39 @@
--- gaussian quadrature
-local GaussianQuadrature = {}
-GaussianQuadrature.__index = GaussianQuadrature
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
-end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
-end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function GaussianQuadrature.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, GaussianQuadrature)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function GaussianQuadrature:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
-    end
-    self.Time += step
-    self.Iterations += 1
-    return out
-end
-function GaussianQuadrature:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function GaussianQuadrature.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function GaussianQuadrature:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
+-- finite-element-methods implementation for GaussianQuadrature
+-- Units: SI for geometry, stress, modulus, density, and loads; linear element routines use the small-displacement and constitutive assumptions named by each element.
+
+local Module = {}
+function Module.Rule1D(order)
+    local rules={
+        [1]={Points={0},Weights={2}},
+        [2]={Points={-1/math.sqrt(3),1/math.sqrt(3)},Weights={1,1}},
+        [3]={Points={-math.sqrt(3/5),0,math.sqrt(3/5)},Weights={5/9,8/9,5/9}},
+        [4]={Points={-0.861136311594053,-0.339981043584856,0.339981043584856,0.861136311594053},Weights={0.347854845137454,0.652145154862546,0.652145154862546,0.347854845137454}},
     }
+    assert(rules[order],"Gauss order supported from 1 to 4")
+    return rules[order]
 end
-function GaussianQuadrature:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
+function Module.Integrate1D(f,a,b,order)
+    local rule=Module.Rule1D(order); local total=0; local midpoint=(a+b)/2; local half=(b-a)/2
+    for i=1,#rule.Points do total+=rule.Weights[i]*f(midpoint+half*rule.Points[i]) end
+    return half*total
 end
-function GaussianQuadrature.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
+
+
+-- Integrate a sampled callback over [a,b] using the stored Gauss-Legendre rule.
+function Module.IntegrateInterval(callback, a, b, order)
+    assert(type(callback)=="function" and b>a,"invalid integration interval")
+    local rule=Module.Rule1D(order)
+    local midpoint,half=0.5*(a+b),0.5*(b-a)
+    local total=0
+    for i=1,#rule.Points do total += rule.Weights[i]*callback(midpoint+half*rule.Points[i]) end
+    return half*total
 end
-function GaussianQuadrature.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
+
+-- Estimate quadrature convergence by comparing two consecutive supported orders.
+function Module.ConvergenceEstimate(callback,a,b,lowOrder,highOrder)
+    local coarse=Module.IntegrateInterval(callback,a,b,lowOrder)
+    local fine=Module.IntegrateInterval(callback,a,b,highOrder)
+    return fine,math.abs(fine-coarse),coarse
 end
-function GaussianQuadrature.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function GaussianQuadrature.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function GaussianQuadrature.BarElementStiffness(E: number, area: number, length: number): {{number}}
-    assert(E>0 and area>0 and length>0, "bar properties must be positive")
-    local k=E*area/length
-    return {{k,-k},{-k,k}}
-end
-return GaussianQuadrature
+
+return Module

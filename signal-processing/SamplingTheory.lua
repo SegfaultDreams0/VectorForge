@@ -1,13 +1,15 @@
--- sampling theory
-local M = {}
-function M.NyquistFrequency(sampleRate)
-    assert(sampleRate > 0, "sample rate must be positive")
-    return sampleRate/2
+-- signal-processing implementation for SamplingTheory
+-- Assumptions: samples are uniformly spaced unless the method accepts explicit timestamps; amplitudes are unit-preserving and frequency units follow the supplied sample rate.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.NyquistFrequency(sampleRate)
+    Num.Positive(sampleRate,"sample rate"); return sampleRate/2
 end
-function M.IsUnaliased(signalFrequency,sampleRate)
-    return math.abs(signalFrequency) < M.NyquistFrequency(sampleRate)
+function Module.IsUnaliased(frequency,sampleRate)
+    return math.abs(frequency)<Module.NyquistFrequency(sampleRate)
 end
-function M.AngularFrequency(frequency)
-    return 2*math.pi*frequency
-end
-return M
+
+return Module

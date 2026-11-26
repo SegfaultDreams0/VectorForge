@@ -1,162 +1,40 @@
--- poisson electrostatics
-local PoissonElectrostatics = {}
-PoissonElectrostatics.__index = PoissonElectrostatics
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+-- electromagnetics implementation for PoissonElectrostatics
+-- Units: SI (m, s, kg, A, V, T); vacuum constants come from shared/Constants.lua unless material parameters are explicitly supplied.
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+
+local Module = {}
+function Module.Solve1D(chargeDensity,length,epsilon,leftPotential,rightPotential)
+    local n=#chargeDensity; assert(n>=2,"at least two interior points required"); Num.Positive(length,"domain length"); Num.Positive(epsilon,"permittivity")
+    local dx=length/(n+1); local matrix=LA.Zeros(n,n); local rhs=table.create(n)
+    for i=1,n do matrix[i][i]=2; if i>1 then matrix[i][i-1]=-1 end; if i<n then matrix[i][i+1]=-1 end; rhs[i]=chargeDensity[i]*dx*dx/epsilon end
+    rhs[1]+=leftPotential; rhs[n]+=rightPotential
+    local solution,reason=LA.Solve(matrix,rhs); assert(solution,reason or "Poisson solve failed")
+    return solution
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+
+
+-- Electric field from potential: E_i = -(phi[i+1]-phi[i-1])/(2 dx).
+function Module.ElectricField1D(potential, spacing)
+    Num.Positive(spacing,"grid spacing"); assert(#potential>=3,"potential grid requires at least three samples")
+    local field=table.create(#potential-2)
+    for i=2,#potential-1 do field[i-1]=-(potential[i+1]-potential[i-1])/(2*spacing) end
+    return field
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
-end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function PoissonElectrostatics.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, PoissonElectrostatics)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function PoissonElectrostatics:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+
+-- Discrete Poisson residual r_i = (phi[i-1]-2phi[i]+phi[i+1])/dx^2 + rho/epsilon.
+function Module.Residual1D(potential, chargeDensity, spacing, permittivity)
+    Num.Positive(spacing,"grid spacing"); Num.Positive(permittivity,"permittivity")
+    assert(#potential==#chargeDensity and #potential>=3,"Poisson arrays must have equal length >= 3")
+    local residual=table.create(#potential-2); local maximum=0
+    for i=2,#potential-1 do
+        local value=(potential[i-1]-2*potential[i]+potential[i+1])/(spacing*spacing)+chargeDensity[i]/permittivity
+        residual[i-1]=value; maximum=math.max(maximum,math.abs(value))
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
+    return residual,maximum
 end
-function PoissonElectrostatics:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function PoissonElectrostatics.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function PoissonElectrostatics:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function PoissonElectrostatics:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function PoissonElectrostatics.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function PoissonElectrostatics.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function PoissonElectrostatics.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function PoissonElectrostatics.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function PoissonElectrostatics.LorentzForce(charge: number, electric: {number}, velocity: {number}, magnetic: {number}): {number}
-    validateVector(electric,3); validateVector(velocity,3); validateVector(magnetic,3)
-    local cross={velocity[2]*magnetic[3]-velocity[3]*magnetic[2],velocity[3]*magnetic[1]-velocity[1]*magnetic[3],velocity[1]*magnetic[2]-velocity[2]*magnetic[1]}
-    return {charge*(electric[1]+cross[1]),charge*(electric[2]+cross[2]),charge*(electric[3]+cross[3])}
-end
-return PoissonElectrostatics
+
+return Module

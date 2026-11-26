@@ -1,7 +1,13 @@
--- thermal material data
-local M = {}
-function M.new(conductivity,specificHeat,density)
-    assert(conductivity > 0 and specificHeat > 0 and density > 0, "invalid thermal material")
-    return {Conductivity=conductivity,SpecificHeat=specificHeat,Density=density,Diffusivity=conductivity/(density*specificHeat)}
+-- thermodynamics implementation for ThermalMaterialData
+-- Units: temperature K, pressure Pa, volume m^3, amount mol, energy J, heat capacity J/(mol K); model assumptions are stated by each equation (ideal, real-gas, or cycle model).
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.Diffusivity(conductivity,density,specificHeat)
+    Num.Positive(conductivity,"conductivity"); Num.Positive(density,"density"); Num.Positive(specificHeat,"specific heat")
+    return conductivity/(density*specificHeat)
 end
-return M
+
+return Module

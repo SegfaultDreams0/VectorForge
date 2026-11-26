@@ -1,168 +1,44 @@
--- rk4integrator
-local RK4Integrator = {}
-RK4Integrator.__index = RK4Integrator
-export type Vector = {number}
-export type Matrix = {{number}}
-local EPS = 1e-10
-local function finite(x: number): boolean
-    return x == x and x ~= math.huge and x ~= -math.huge
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VectorForge = ReplicatedStorage:WaitForChild("VectorForge")
+local LA = require(VectorForge:WaitForChild("SpectralLinearAlgebra"))
+-- differential-equations implementation for RK4Integrator
+-- Assumptions: state components retain caller-defined physical units; integration routines require consistent time units, valid initial data, and method-appropriate step sizes.
+local Shared = ReplicatedStorage:WaitForChild("VectorForgeShared")
+local Num = require(Shared:WaitForChild("NumericalKernels"))
+
+local Module = {}
+function Module.Step(f,t,state,dt)
+    Num.Positive(dt,"step size"); return Num.RK4(f,state,t,dt)
 end
-local function copyVector(v: Vector): Vector
-    local out = table.create(#v)
-    for i = 1, #v do out[i] = v[i] end
-    return out
+function Module.IntegrateFixedSteps(f,t0,state,dt,steps)
+    local result=table.clone(state); local time=t0
+    for i=1,steps do result=Num.RK4(f,result,time,dt); time+=dt end
+    return result,time
 end
-local function zeros(n: number): Vector
-    local out = table.create(n, 0)
-    return out
+
+
+-- Step doubling error estimate: compare one full RK4 step with two half steps.
+function Module.StepDoubling(rhs,state,time,step)
+    Num.Positive(step,"integration step")
+    local full=Module.Step(rhs,time,state,step)
+    local half=Module.Step(rhs,time,state,step/2)
+    local refined=Module.Step(rhs,time+step/2,half,step/2)
+    local error=LA.Norm(Num.Scale(Num.Subtract(refined,full),1/15))
+    return refined,error
 end
-local function dot(a: Vector, b: Vector): number
-    assert(#a == #b, "dimension mismatch")
-    local s = 0
-    for i = 1, #a do s += a[i] * b[i] end
-    return s
-end
-local function norm(a: Vector): number
-    return math.sqrt(math.max(0, dot(a, a)))
-end
-local function add(a: Vector, b: Vector): Vector
-    assert(#a == #b, "dimension mismatch")
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] + b[i] end
-    return out
-end
-local function scale(a: Vector, k: number): Vector
-    local out = table.create(#a)
-    for i = 1, #a do out[i] = a[i] * k end
-    return out
-end
-local function validateVector(v: Vector, expected: number?)
-    assert(type(v) == "table", "expected numeric vector")
-    if expected then assert(#v == expected, "unexpected vector dimension") end
-    for i = 1, #v do assert(type(v[i]) == "number" and finite(v[i]), "vector contains invalid value") end
-end
-function RK4Integrator.new(configuration: {[string]: any}?)
-    local self = setmetatable({}, RK4Integrator)
-    self.Configuration = configuration or {}
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-    return self
-end
-function RK4Integrator:Evaluate(state: Vector, input: Vector?, dt: number?): Vector
-    validateVector(state)
-    local u = input or {}
-    validateVector(u)
-    local step = dt or (self.Configuration.TimeStep or 1e-3)
-    assert(step > 0 and finite(step), "time step must be finite and positive")
-    local out = copyVector(state)
-    local gain = self.Configuration.Gain or 1
-    local damping = self.Configuration.Damping or 0
-    for i = 1, #state do
-        local forcing = u[i] or 0
-        out[i] = state[i] + step * (gain * forcing - damping * state[i])
+
+-- Fixed-step integration records states at a caller-selected output interval.
+function Module.IntegrateWithHistory(rhs,initialState,startTime,step,stepCount,outputEvery)
+    Num.Positive(step,"integration step")
+    assert(stepCount>=0 and stepCount%1==0,"step count must be a nonnegative integer")
+    local interval=outputEvery or 1
+    assert(interval>=1 and interval%1==0,"output interval must be a positive integer")
+    local state=table.clone(initialState); local time=startTime; local history={{Time=time,State=table.clone(state)}}
+    for index=1,stepCount do
+        state=Module.Step(rhs,time,state,step); time+=step
+        if index%interval==0 then table.insert(history,{Time=time,State=table.clone(state)}) end
     end
-    self.Time += step
-    self.Iterations += 1
-    return out
+    return state,history
 end
-function RK4Integrator:Integrate(initial: Vector, derivative: (Vector, number) -> Vector, duration: number, step: number?): Vector
-    validateVector(initial)
-    assert(duration >= 0 and finite(duration), "duration must be nonnegative")
-    local h = step or (self.Configuration.TimeStep or 1e-3)
-    assert(h > 0, "step must be positive")
-    local x = copyVector(initial)
-    local elapsed = 0
-    while elapsed < duration do
-        local dt = math.min(h, duration - elapsed)
-        local k1 = derivative(x, self.Time + elapsed)
-        validateVector(k1, #x)
-        local midpoint = add(x, scale(k1, 0.5 * dt))
-        local k2 = derivative(midpoint, self.Time + elapsed + 0.5 * dt)
-        validateVector(k2, #x)
-        x = add(x, scale(k2, dt))
-        elapsed += dt
-    end
-    self.Time += duration
-    self.Iterations += 1
-    return x
-end
-function RK4Integrator.Jacobian(f: (Vector) -> Vector, x: Vector, h: number?): Matrix
-    validateVector(x)
-    local delta = h or 1e-6
-    assert(delta > 0, "finite-difference scale must be positive")
-    local base = f(copyVector(x))
-    validateVector(base)
-    local J = table.create(#base)
-    for i = 1, #base do J[i] = table.create(#x, 0) end
-    for j = 1, #x do
-        local xp, xm = copyVector(x), copyVector(x)
-        xp[j] += delta
-        xm[j] -= delta
-        local fp, fm = f(xp), f(xm)
-        validateVector(fp, #base)
-        validateVector(fm, #base)
-        for i = 1, #base do J[i][j] = (fp[i] - fm[i]) / (2 * delta) end
-    end
-    return J
-end
-function RK4Integrator:GetDiagnostics()
-    return {
-        time = self.Time,
-        iterations = self.Iterations,
-        residual = self.Diagnostics.residual,
-        converged = self.Diagnostics.converged,
-    }
-end
-function RK4Integrator:Reset()
-    self.Time = 0
-    self.Iterations = 0
-    self.Diagnostics = { residual = math.huge, converged = false }
-end
-function RK4Integrator.ComputeResidual(lhs: {number}, rhs: {number}): (number, number)
-    validateVector(lhs)
-    validateVector(rhs, #lhs)
-    local sumSquares, referenceSquares = 0, 0
-    for i = 1, #lhs do
-        local r = lhs[i] - rhs[i]
-        sumSquares += r * r
-        referenceSquares += rhs[i] * rhs[i]
-    end
-    local absolute = math.sqrt(sumSquares)
-    local relative = absolute / math.max(math.sqrt(referenceSquares), EPS)
-    return absolute, relative
-end
-function RK4Integrator.WeightedLeastSquares(residual: {number}, weights: {number}?): number
-    validateVector(residual)
-    local total = 0
-    for i = 1, #residual do
-        local w = if weights then (weights[i] or 0) else 1
-        assert(w >= 0 and finite(w), "weights must be finite and nonnegative")
-        total += 0.5 * w * residual[i] * residual[i]
-    end
-    return total
-end
-function RK4Integrator.NormalizeState(state: {number}): {number}
-    validateVector(state)
-    local magnitude = norm(state)
-    if magnitude <= EPS then return zeros(#state) end
-    return scale(state, 1 / magnitude)
-end
-function RK4Integrator.EstimateRefinement(coarse: number, fine: number, order: number?): number
-    assert(finite(coarse) and finite(fine), "estimates must be finite")
-    local p = order or 1
-    assert(p > 0, "order must be positive")
-    return math.abs(fine - coarse) / (2^p - 1)
-end
-function RK4Integrator.RK4Step(x: {number}, t: number, h: number, f: ({number},number)->{number}): {number}
-    validateVector(x); assert(h>0, "step must be positive")
-    local k1=f(x,t)
-    local x2=add(x,scale(k1,h/2)); local k2=f(x2,t+h/2)
-    local x3=add(x,scale(k2,h/2)); local k3=f(x3,t+h/2)
-    local x4=add(x,scale(k3,h)); local k4=f(x4,t+h)
-    validateVector(k1,#x); validateVector(k2,#x); validateVector(k3,#x); validateVector(k4,#x)
-    local out=table.create(#x)
-    for i=1,#x do out[i]=x[i]+h*(k1[i]+2*k2[i]+2*k3[i]+k4[i])/6 end
-    return out
-end
-return RK4Integrator
+
+return Module

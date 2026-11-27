@@ -19,10 +19,10 @@ VectorForge is an experimental Luau library exploring the implementation of adva
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square"></a>
   <a href="#project-status"><img alt="Status" src="https://img.shields.io/badge/Status-Experimental-orange?style=flat-square"></a>
   <br>
-  <img alt="Commit activity" src="https://img.shields.io/github/commit-activity/m/SegfaultDreams0/REPO?style=flat-square">
-  <img alt="Last commit" src="https://img.shields.io/github/last-commit/SegfaultDreams0/REPO?style=flat-square">
-  <img alt="Contributors" src="https://img.shields.io/github/contributors/SegfaultDreams0/REPO?style=flat-square">
-  <img alt="Closed issues" src="https://img.shields.io/github/issues-closed/SegfaultDreams0/REPO?style=flat-square">
+  <img alt="Commit activity" src="https://img.shields.io/github/commit-activity/m/SegfaultDreams0/VectorForge?style=flat-square">
+  <img alt="Last commit" src="https://img.shields.io/github/last-commit/SegfaultDreams0/VectorForge?style=flat-square">
+  <img alt="Contributors" src="https://img.shields.io/github/contributors/SegfaultDreams0/VectorForge?style=flat-square">
+  <img alt="Closed issues" src="https://img.shields.io/github/issues-closed/SegfaultDreams0/VectorForge?style=flat-square">
 </p>
 
 **[Quick Start](#quick-start) · [Core Modules](#core-modules) · [Scientific Extensions](#scientific-extensions) · [Examples](#examples) · [Experiments](#experiments) · [Simulations](#simulations) · [Datasets](#datasets) · [Visualizations](#visualizations) · [Documentation](#documentation)**

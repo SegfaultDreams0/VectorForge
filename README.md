@@ -2,7 +2,7 @@
 
 # VectorForge
 
-<img width="2048" height="280" alt="github jan banner" src="https://github.com/user-attachments/assets/f3f87889-c133-433b-b250-236218150d3f" />
+<img width="2048" height="280" alt="github jan banner" src="https://github.com/SegfaultDreams0/VectorForge/blob/main/docs/assets/vectorforge-banner.png" />
 
 ### Advanced Computational Mathematics for Roblox Luau
 

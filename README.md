@@ -13,6 +13,10 @@
 
 VectorForge is an experimental Luau library exploring the implementation of advanced computational mathematics, including Lie group kinematics, numerical linear algebra, Bayesian state estimation, differential geometry, and more.
 
+ <img alt="GitHub commit activity" src="https://img.shields.io/github/commit-activity/m/janhq/jan"/>
+  <img alt="Github Last Commit" src="https://img.shields.io/github/last-commit/janhq/jan"/>
+  <img alt="Github Contributors" src="https://img.shields.io/github/contributors/janhq/jan"/>
+  <img alt="GitHub closed issues" src="https://img.shields.io/github/issues-closed/janhq/jan"/>
 [![Language](https://img.shields.io/badge/Language-Luau-blue?style=flat-square)](https://luau.org/)
 [![Platform](https://img.shields.io/badge/Platform-Roblox-00A2FF?style=flat-square&logo=roblox&logoColor=white)](https://www.roblox.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)

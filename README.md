@@ -1,6 +1,6 @@
  <div align="center">
 
-# VectorForge Open-source Computational Mathematics for Luau 
+# VectorForge
 
 
 <img width="2048" height="280" alt="github jan banner" src="https://github.com/SegfaultDreams0/VectorForge/blob/main/docs/assets/vectorforge-banner.png" />

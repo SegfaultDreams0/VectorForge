@@ -39,21 +39,14 @@ The special orthogonal group represents all valid three-dimensional rotation mat
 
 It is defined as:
 
-\[
-SO(3)=
-\left\{
-R\in\mathbb{R}^{3\times3}
-\mid
-R^TR=I,\quad \det(R)=1
-\right\}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-001-dark.svg"><img src="math/eq-001-light.svg" alt="SO(3)=\left\{R\in\mathbb{R}^{3\times3}\mid R^TR=I,\quad \det(R)=1\right\}"></picture></p>
 
 Where:
 
-- \(R\) is a rotation matrix.
-- \(R^T\) is its transpose.
-- \(I\) is the identity matrix.
-- \(\det(R)\) is the determinant.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-001-dark.svg"><img src="math/in-001-light.svg" alt="R" align="middle"></picture> is a rotation matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-002-dark.svg"><img src="math/in-002-light.svg" alt="R^T" align="middle"></picture> is its transpose.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-003-dark.svg"><img src="math/in-003-light.svg" alt="I" align="middle"></picture> is the identity matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-004-dark.svg"><img src="math/in-004-light.svg" alt="\det(R)" align="middle"></picture> is the determinant.
 
 The orthogonality condition ensures that rotations preserve lengths and angles.
 
@@ -67,17 +60,13 @@ Quaternions provide an alternative representation of three-dimensional orientati
 
 A quaternion can be expressed as:
 
-\[
-q=w+xi+yj+zk
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-002-dark.svg"><img src="math/eq-002-light.svg" alt="q=w+xi+yj+zk"></picture></p>
 
-Where \(w,x,y,z\) are scalar components and \(i,j,k\) are imaginary basis elements satisfying quaternion multiplication rules.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-005-dark.svg"><img src="math/in-005-light.svg" alt="w,x,y,z" align="middle"></picture> are scalar components and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-006-dark.svg"><img src="math/in-006-light.svg" alt="i,j,k" align="middle"></picture> are imaginary basis elements satisfying quaternion multiplication rules.
 
 A unit quaternion satisfies:
 
-\[
-w^2+x^2+y^2+z^2=1
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-003-dark.svg"><img src="math/eq-003-light.svg" alt="w^2+x^2+y^2+z^2=1"></picture></p>
 
 Unit quaternions are commonly used to represent spatial orientations because they provide a compact representation and support smooth rotational interpolation.
 
@@ -85,31 +74,21 @@ Unit quaternions are commonly used to represent spatial orientations because the
 
 Spherical Linear Interpolation, commonly called SLERP, interpolates between two normalized quaternions.
 
-For normalized quaternions \(q_0\) and \(q_1\):
+For normalized quaternions <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-007-dark.svg"><img src="math/in-007-light.svg" alt="q_0" align="middle"></picture> and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-008-dark.svg"><img src="math/in-008-light.svg" alt="q_1" align="middle"></picture>:
 
-\[
-\operatorname{SLERP}(q_0,q_1,t)
-=
-\frac{\sin((1-t)\theta)}{\sin\theta}q_0
-+
-\frac{\sin(t\theta)}{\sin\theta}q_1
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-004-dark.svg"><img src="math/eq-004-light.svg" alt="\operatorname{SLERP}(q_0,q_1,t)=\frac{\sin((1-t)\theta)}{\sin\theta}\,q_0+\frac{\sin(t\theta)}{\sin\theta}\,q_1"></picture></p>
 
 Where:
 
-\[
-\cos\theta=q_0\cdot q_1
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-005-dark.svg"><img src="math/eq-005-light.svg" alt="\cos\theta=q_0\cdot q_1"></picture></p>
 
 and:
 
-\[
-t\in[0,1]
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-006-dark.svg"><img src="math/eq-006-light.svg" alt="t\in[0,1]"></picture></p>
 
 SLERP provides interpolation along the spherical geometry of quaternion orientation space.
 
-In practical applications, implementations commonly account for quaternion sign ambiguity and near-identical orientations.
+In practical applications, implementations commonly account for quaternion sign ambiguity and near-identical orientations (when <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-009-dark.svg"><img src="math/in-009-light.svg" alt="\sin\theta\to0" align="middle"></picture>, a linear-interpolation fallback is typically used).
 
 ### 1.4 The Special Euclidean Group SE(3)
 
@@ -117,24 +96,16 @@ While SO(3) represents rotation, SE(3) represents rigid transformations combinin
 
 A homogeneous transformation matrix can be written as:
 
-\[
-T=
-\begin{bmatrix}
-R&t\\
-0&1
-\end{bmatrix}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-007-dark.svg"><img src="math/eq-007-light.svg" alt="T=\begin{bmatrix}R&amp;t\\0&amp;1\end{bmatrix}"></picture></p>
 
 Where:
 
-- \(R\in SO(3)\) represents orientation.
-- \(t\in\mathbb{R}^3\) represents translation.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-010-dark.svg"><img src="math/in-010-light.svg" alt="R\in SO(3)" align="middle"></picture> represents orientation.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-011-dark.svg"><img src="math/in-011-light.svg" alt="t\in\mathbb{R}^3" align="middle"></picture> represents translation.
 
 A point in homogeneous coordinates can be transformed through:
 
-\[
-p'=Tp
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-008-dark.svg"><img src="math/eq-008-light.svg" alt="p'=Tp"></picture></p>
 
 This representation is widely used in robotics and spatial kinematics.
 
@@ -144,22 +115,13 @@ SO(3) and SE(3) are Lie groups.
 
 Their corresponding Lie algebras provide local mathematical representations of transformations.
 
-For a rotation vector \(\phi\), the exponential map relates a skew-symmetric matrix to a rotation:
+For a rotation vector <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-012-dark.svg"><img src="math/in-012-light.svg" alt="\phi" align="middle"></picture>, the exponential map relates a skew-symmetric matrix to a rotation:
 
-\[
-R=\exp([\phi]_\times)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-009-dark.svg"><img src="math/eq-009-light.svg" alt="R=\exp([\phi]_\times)"></picture></p>
 
 The skew-symmetric matrix is:
 
-\[
-[\phi]_\times=
-\begin{bmatrix}
-0&-\phi_z&\phi_y\\
-\phi_z&0&-\phi_x\\
--\phi_y&\phi_x&0
-\end{bmatrix}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-010-dark.svg"><img src="math/eq-010-light.svg" alt="[\phi]_\times=\begin{bmatrix}0&amp;-\phi_z&amp;\phi_y\\\phi_z&amp;0&amp;-\phi_x\\-\phi_y&amp;\phi_x&amp;0\end{bmatrix}"></picture></p>
 
 The logarithmic map performs the inverse operation within its valid domain.
 
@@ -188,19 +150,17 @@ VectorForge explores matrix operations, matrix factorizations, eigenvalue calcul
 
 A linear system can be represented as:
 
-\[
-Ax=b
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-011-dark.svg"><img src="math/eq-011-light.svg" alt="Ax=b"></picture></p>
 
 Where:
 
-- \(A\) is the coefficient matrix.
-- \(x\) is the unknown solution vector.
-- \(b\) is the known right-hand-side vector.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-013-dark.svg"><img src="math/in-013-light.svg" alt="A" align="middle"></picture> is the coefficient matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-014-dark.svg"><img src="math/in-014-light.svg" alt="x" align="middle"></picture> is the unknown solution vector.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-015-dark.svg"><img src="math/in-015-light.svg" alt="b" align="middle"></picture> is the known right-hand-side vector.
 
-The objective is to determine a vector \(x\) satisfying the system.
+The objective is to determine a vector <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-014-dark.svg"><img src="math/in-014-light.svg" alt="x" align="middle"></picture> satisfying the system.
 
-The existence and uniqueness of a solution depend on the properties and rank of \(A\).
+The existence and uniqueness of a solution depend on the properties and rank of <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-013-dark.svg"><img src="math/in-013-light.svg" alt="A" align="middle"></picture>.
 
 ### 2.2 LU Decomposition
 
@@ -208,15 +168,13 @@ LU decomposition expresses a suitable square matrix as a product of lower and up
 
 With pivoting, the relationship is commonly expressed as:
 
-\[
-PA=LU
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-012-dark.svg"><img src="math/eq-012-light.svg" alt="PA=LU"></picture></p>
 
 Where:
 
-- \(P\) is a permutation matrix.
-- \(L\) is a lower triangular matrix.
-- \(U\) is an upper triangular matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-016-dark.svg"><img src="math/in-016-light.svg" alt="P" align="middle"></picture> is a permutation matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-017-dark.svg"><img src="math/in-017-light.svg" alt="L" align="middle"></picture> is a lower triangular matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-018-dark.svg"><img src="math/in-018-light.svg" alt="U" align="middle"></picture> is an upper triangular matrix.
 
 This decomposition allows linear systems to be solved through forward and backward substitution.
 
@@ -226,11 +184,9 @@ It is especially useful when solving multiple systems involving the same coeffic
 
 For a real symmetric positive-definite matrix, Cholesky decomposition expresses:
 
-\[
-A=LL^T
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-013-dark.svg"><img src="math/eq-013-light.svg" alt="A=LL^T"></picture></p>
 
-Where \(L\) is a lower triangular matrix.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-017-dark.svg"><img src="math/in-017-light.svg" alt="L" align="middle"></picture> is a lower triangular matrix.
 
 The method is computationally efficient for matrices satisfying the required mathematical conditions.
 
@@ -240,14 +196,12 @@ It is commonly used in numerical optimization, covariance processing, and statis
 
 QR decomposition represents a matrix as:
 
-\[
-A=QR
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-014-dark.svg"><img src="math/eq-014-light.svg" alt="A=QR"></picture></p>
 
 Where:
 
-- \(Q\) has orthonormal columns.
-- \(R\) is upper triangular.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-019-dark.svg"><img src="math/in-019-light.svg" alt="Q" align="middle"></picture> has orthonormal columns.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-001-dark.svg"><img src="math/in-001-light.svg" alt="R" align="middle"></picture> is upper triangular.
 
 Householder transformations provide a numerically useful method for constructing this factorization.
 
@@ -261,31 +215,23 @@ In such situations, an exact solution may not exist.
 
 Least-squares estimation seeks a solution minimizing the squared residual:
 
-\[
-\min_x\|Ax-b\|_2^2
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-015-dark.svg"><img src="math/eq-015-light.svg" alt="\min_x\|Ax-b\|_2^2"></picture></p>
 
 The residual is:
 
-\[
-r=b-Ax
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-016-dark.svg"><img src="math/eq-016-light.svg" alt="r=b-Ax"></picture></p>
 
 The objective is to minimize:
 
-\[
-\|r\|_2^2
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-017-dark.svg"><img src="math/eq-017-light.svg" alt="\|r\|_2^2"></picture></p>
 
 This method is widely used in regression, parameter estimation, and numerical modeling.
 
 ### 2.6 Eigenvalues and Eigenvectors
 
-For a square matrix \(A\), an eigenvector \(v\) and eigenvalue \(\lambda\) satisfy:
+For a square matrix <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-013-dark.svg"><img src="math/in-013-light.svg" alt="A" align="middle"></picture>, an eigenvector <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-020-dark.svg"><img src="math/in-020-light.svg" alt="v" align="middle"></picture> and eigenvalue <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-021-dark.svg"><img src="math/in-021-light.svg" alt="\lambda" align="middle"></picture> satisfy:
 
-\[
-Av=\lambda v
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-018-dark.svg"><img src="math/eq-018-light.svg" alt="Av=\lambda v"></picture></p>
 
 Eigenvalues describe scaling factors along corresponding eigenvector directions.
 
@@ -297,9 +243,7 @@ For symmetric matrices, eigenvalues are real and eigenvectors can be chosen orth
 
 Conjugate Gradient is an iterative method for solving systems of the form:
 
-\[
-Ax=b
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-011-dark.svg"><img src="math/eq-011-light.svg" alt="Ax=b"></picture></p>
 
 It is particularly suited to symmetric positive-definite matrices.
 
@@ -334,23 +278,19 @@ Bayesian estimation provides a framework for combining prior information with ne
 
 A general discrete-time state-space model can be written as:
 
-\[
-x_k=f(x_{k-1},u_k)+w_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-019-dark.svg"><img src="math/eq-019-light.svg" alt="x_k=f(x_{k-1},u_k)+w_k"></picture></p>
 
-\[
-z_k=h(x_k)+v_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-020-dark.svg"><img src="math/eq-020-light.svg" alt="z_k=h(x_k)+v_k"></picture></p>
 
 Where:
 
-- \(x_k\) represents the system state.
-- \(u_k\) represents an optional control input.
-- \(z_k\) represents an observation.
-- \(f\) represents the state-transition function.
-- \(h\) represents the measurement function.
-- \(w_k\) represents process noise.
-- \(v_k\) represents measurement noise.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-022-dark.svg"><img src="math/in-022-light.svg" alt="x_k" align="middle"></picture> represents the system state.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-023-dark.svg"><img src="math/in-023-light.svg" alt="u_k" align="middle"></picture> represents an optional control input.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-024-dark.svg"><img src="math/in-024-light.svg" alt="z_k" align="middle"></picture> represents an observation.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-025-dark.svg"><img src="math/in-025-light.svg" alt="f" align="middle"></picture> represents the state-transition function.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-026-dark.svg"><img src="math/in-026-light.svg" alt="h" align="middle"></picture> represents the measurement function.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-027-dark.svg"><img src="math/in-027-light.svg" alt="w_k" align="middle"></picture> represents process noise.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-028-dark.svg"><img src="math/in-028-light.svg" alt="v_k" align="middle"></picture> represents measurement noise.
 
 The objective is to estimate the hidden state from the available observations.
 
@@ -360,17 +300,7 @@ An estimator maintains an estimate of the system state and its associated uncert
 
 For a position-tracking system, the state might contain:
 
-\[
-x=
-\begin{bmatrix}
-p_x\\
-p_y\\
-p_z\\
-v_x\\
-v_y\\
-v_z
-\end{bmatrix}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-021-dark.svg"><img src="math/eq-021-light.svg" alt="x=\begin{bmatrix}p_x\\p_y\\p_z\\v_x\\v_y\\v_z\end{bmatrix}"></picture></p>
 
 Where position and velocity are represented along three spatial axes.
 
@@ -384,64 +314,46 @@ It uses local linear approximations to propagate the state and covariance.
 
 The prediction step estimates the next state:
 
-\[
-\hat{x}_{k|k-1}=f(\hat{x}_{k-1|k-1},u_k)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-022-dark.svg"><img src="math/eq-022-light.svg" alt="\hat{x}_{k|k-1}=f(\hat{x}_{k-1|k-1},u_k)"></picture></p>
 
 The predicted covariance is:
 
-\[
-P_{k|k-1}
-=
-F_kP_{k-1|k-1}F_k^T+Q_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-023-dark.svg"><img src="math/eq-023-light.svg" alt="P_{k|k-1}=F_kP_{k-1|k-1}F_k^T+Q_k"></picture></p>
 
 Where:
 
-- \(F_k\) is the state-transition Jacobian.
-- \(P\) is the covariance matrix.
-- \(Q_k\) is the process-noise covariance.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-029-dark.svg"><img src="math/in-029-light.svg" alt="F_k" align="middle"></picture> is the state-transition Jacobian.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-016-dark.svg"><img src="math/in-016-light.svg" alt="P" align="middle"></picture> is the covariance matrix.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-030-dark.svg"><img src="math/in-030-light.svg" alt="Q_k" align="middle"></picture> is the process-noise covariance.
 
 ### 3.4 Measurement Correction
 
 The predicted measurement is:
 
-\[
-\hat{z}_k=h(\hat{x}_{k|k-1})
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-024-dark.svg"><img src="math/eq-024-light.svg" alt="\hat{z}_k=h(\hat{x}_{k|k-1})"></picture></p>
 
 The innovation is:
 
-\[
-y_k=z_k-\hat{z}_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-025-dark.svg"><img src="math/eq-025-light.svg" alt="y_k=z_k-\hat{z}_k"></picture></p>
 
 It represents the difference between the actual observation and the predicted observation.
 
 The innovation covariance is:
 
-\[
-S_k=H_kP_{k|k-1}H_k^T+R_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-026-dark.svg"><img src="math/eq-026-light.svg" alt="S_k=H_kP_{k|k-1}H_k^T+R_k"></picture></p>
 
 Where:
 
-- \(H_k\) is the measurement Jacobian.
-- \(R_k\) is the measurement-noise covariance.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-031-dark.svg"><img src="math/in-031-light.svg" alt="H_k" align="middle"></picture> is the measurement Jacobian.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-032-dark.svg"><img src="math/in-032-light.svg" alt="R_k" align="middle"></picture> is the measurement-noise covariance.
 
 The Kalman gain is:
 
-\[
-K_k=P_{k|k-1}H_k^TS_k^{-1}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-027-dark.svg"><img src="math/eq-027-light.svg" alt="K_k=P_{k|k-1}H_k^TS_k^{-1}"></picture></p>
 
 The corrected state estimate is:
 
-\[
-\hat{x}_{k|k}
-=
-\hat{x}_{k|k-1}+K_ky_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-028-dark.svg"><img src="math/eq-028-light.svg" alt="\hat{x}_{k|k}=\hat{x}_{k|k-1}+K_ky_k"></picture></p>
 
 A covariance update then incorporates the new measurement.
 
@@ -453,9 +365,7 @@ An observation that differs significantly from the predicted measurement may be 
 
 A common statistical measure is the squared Mahalanobis distance:
 
-\[
-d^2=y_k^TS_k^{-1}y_k
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-029-dark.svg"><img src="math/eq-029-light.svg" alt="d^2=y_k^TS_k^{-1}y_k"></picture></p>
 
 This measures the innovation relative to its predicted covariance.
 
@@ -486,30 +396,19 @@ In VectorForge, the focus is on parameterized curves and their associated geomet
 
 A three-dimensional curve can be represented as:
 
-\[
-r(t)=
-\begin{bmatrix}
-x(t)\\
-y(t)\\
-z(t)
-\end{bmatrix}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-030-dark.svg"><img src="math/eq-030-light.svg" alt="r(t)=\begin{bmatrix}x(t)\\y(t)\\z(t)\end{bmatrix}"></picture></p>
 
-Where \(t\) is a curve parameter.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-033-dark.svg"><img src="math/in-033-light.svg" alt="t" align="middle"></picture> is a curve parameter.
 
 The first derivative is:
 
-\[
-r'(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-031-dark.svg"><img src="math/eq-031-light.svg" alt="r'(t)"></picture></p>
 
 It describes the direction and rate of change of the curve with respect to its parameter.
 
 The second derivative:
 
-\[
-r''(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-032-dark.svg"><img src="math/eq-032-light.svg" alt="r''(t)"></picture></p>
 
 Describes how the first derivative changes.
 
@@ -519,35 +418,21 @@ These derivatives are fundamental to understanding the geometry of the curve.
 
 Hermite interpolation constructs smooth curves using endpoint positions and tangent information.
 
-For a normalized parameter \(t\in[0,1]\), a cubic Hermite curve can be expressed as:
+For a normalized parameter <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-034-dark.svg"><img src="math/in-034-light.svg" alt="t\in[0,1]" align="middle"></picture>, a cubic Hermite curve can be expressed as:
 
-\[
-r(t)=
-h_{00}(t)p_0+
-h_{10}(t)m_0+
-h_{01}(t)p_1+
-h_{11}(t)m_1
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-033-dark.svg"><img src="math/eq-033-light.svg" alt="r(t)=h_{00}(t)p_0+h_{10}(t)m_0+h_{01}(t)p_1+h_{11}(t)m_1"></picture></p>
 
 Where:
 
-\[
-h_{00}(t)=2t^3-3t^2+1
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-034-dark.svg"><img src="math/eq-034-light.svg" alt="h_{00}(t)=2t^3-3t^2+1"></picture></p>
 
-\[
-h_{10}(t)=t^3-2t^2+t
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-035-dark.svg"><img src="math/eq-035-light.svg" alt="h_{10}(t)=t^3-2t^2+t"></picture></p>
 
-\[
-h_{01}(t)=-2t^3+3t^2
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-036-dark.svg"><img src="math/eq-036-light.svg" alt="h_{01}(t)=-2t^3+3t^2"></picture></p>
 
-\[
-h_{11}(t)=t^3-t^2
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-037-dark.svg"><img src="math/eq-037-light.svg" alt="h_{11}(t)=t^3-t^2"></picture></p>
 
-The vectors \(p_0,p_1\) represent endpoint positions, while \(m_0,m_1\) represent endpoint tangents.
+The vectors <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-035-dark.svg"><img src="math/in-035-light.svg" alt="p_0,p_1" align="middle"></picture> represent endpoint positions, while <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-036-dark.svg"><img src="math/in-036-light.svg" alt="m_0,m_1" align="middle"></picture> represent endpoint tangents.
 
 This allows a curve to be constructed with control over both its positions and directional behaviour.
 
@@ -557,17 +442,13 @@ Curvature describes how rapidly the direction of a curve changes relative to tra
 
 For a regular three-dimensional curve:
 
-\[
-\kappa(t)=
-\frac{\|r'(t)\times r''(t)\|}
-{\|r'(t)\|^3}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-038-dark.svg"><img src="math/eq-038-light.svg" alt="\kappa(t)=\frac{\|r'(t)\times r''(t)\|}{\|r'(t)\|^3}"></picture></p>
 
 Where:
 
-- \(r'(t)\) is the first derivative.
-- \(r''(t)\) is the second derivative.
-- \(\times\) represents the cross product.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-037-dark.svg"><img src="math/in-037-light.svg" alt="r'(t)" align="middle"></picture> is the first derivative.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-038-dark.svg"><img src="math/in-038-light.svg" alt="r''(t)" align="middle"></picture> is the second derivative.
+- <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-039-dark.svg"><img src="math/in-039-light.svg" alt="\times" align="middle"></picture> represents the cross product.
 
 A straight line has zero curvature.
 
@@ -579,27 +460,17 @@ Torsion describes the rate at which a three-dimensional curve twists out of its 
 
 For a sufficiently smooth regular curve:
 
-\[
-\tau(t)=
-\frac{
-(r'(t)\times r''(t))\cdot r'''(t)
-}{
-\|r'(t)\times r''(t)\|^2
-}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-039-dark.svg"><img src="math/eq-039-light.svg" alt="\tau(t)=\frac{(r'(t)\times r''(t))\cdot r'''(t)}{\|r'(t)\times r''(t)\|^2}"></picture></p>
 
-Where \(r'''(t)\) is the third derivative.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-040-dark.svg"><img src="math/in-040-light.svg" alt="r'''(t)" align="middle"></picture> is the third derivative.
 
 Curvature describes bending, while torsion describes spatial twisting.
 
 ### 4.5 Arc Length
 
-The length of a curve between parameters \(a\) and \(b\) is:
+The length of a curve between parameters <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-041-dark.svg"><img src="math/in-041-light.svg" alt="a" align="middle"></picture> and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-015-dark.svg"><img src="math/in-015-light.svg" alt="b" align="middle"></picture> is:
 
-\[
-s=
-\int_a^b\|r'(t)\|\,dt
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-040-dark.svg"><img src="math/eq-040-light.svg" alt="s=\int_a^b\|r'(t)\|\,dt"></picture></p>
 
 This represents the actual distance travelled along the curve rather than the straight-line distance between its endpoints.
 
@@ -615,11 +486,9 @@ Arc-length parameterization provides a way to determine the curve parameter corr
 
 Given:
 
-\[
-s(t)=\int_0^t\|r'(u)\|\,du
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-041-dark.svg"><img src="math/eq-041-light.svg" alt="s(t)=\int_0^t\|r'(u)\|\,du"></picture></p>
 
-The goal is to find the parameter \(t\) corresponding to a specified arc length \(s\).
+The goal is to find the parameter <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-033-dark.svg"><img src="math/in-033-light.svg" alt="t" align="middle"></picture> corresponding to a specified arc length <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-042-dark.svg"><img src="math/in-042-light.svg" alt="s" align="middle"></picture>.
 
 This generally requires numerical inversion when no analytical inverse is available.
 
@@ -629,23 +498,19 @@ It is particularly useful for movement systems requiring approximately constant 
 
 A Frenet frame describes the local geometry of a regular curve using three mutually perpendicular vectors:
 
-- Tangent \(T\).
-- Normal \(N\).
-- Binormal \(B\).
+- Tangent <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-043-dark.svg"><img src="math/in-043-light.svg" alt="T" align="middle"></picture>.
+- Normal <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-044-dark.svg"><img src="math/in-044-light.svg" alt="N" align="middle"></picture>.
+- Binormal <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-045-dark.svg"><img src="math/in-045-light.svg" alt="B" align="middle"></picture>.
 
 The tangent is:
 
-\[
-T(t)=\frac{r'(t)}{\|r'(t)\|}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-042-dark.svg"><img src="math/eq-042-light.svg" alt="T(t)=\frac{r'(t)}{\|r'(t)\|}"></picture></p>
 
 The normal is obtained from the normalized derivative of the tangent where defined.
 
 The binormal is:
 
-\[
-B(t)=T(t)\times N(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-043-dark.svg"><img src="math/eq-043-light.svg" alt="B(t)=T(t)\times N(t)"></picture></p>
 
 These vectors provide a local coordinate frame along a curve.
 
@@ -667,21 +532,15 @@ Minimum-jerk trajectories are designed to produce smooth motion with controlled 
 
 A common normalized fifth-order interpolation function is:
 
-\[
-s(t)=10t^3-15t^4+6t^5
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-044-dark.svg"><img src="math/eq-044-light.svg" alt="s(t)=10t^3-15t^4+6t^5"></picture></p>
 
 For:
 
-\[
-t\in[0,1]
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-006-dark.svg"><img src="math/eq-006-light.svg" alt="t\in[0,1]"></picture></p>
 
 A position trajectory between two endpoints can be expressed as:
 
-\[
-p(t)=p_0+(p_1-p_0)s(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-045-dark.svg"><img src="math/eq-045-light.svg" alt="p(t)=p_0+(p_1-p_0)s(t)"></picture></p>
 
 This formulation has zero velocity and acceleration at both endpoints when used with the normalized time parameter.
 
@@ -708,27 +567,19 @@ Automatic differentiation computes derivatives by applying the chain rule system
 
 A scalar intermediate value can be paired with its derivative with respect to an input:
 
-\[
-(a,\dot a)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-046-dark.svg"><img src="math/eq-046-light.svg" alt="(a,\dot a)"></picture></p>
 
-For an operation \(c=a+b\):
+For an operation <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-046-dark.svg"><img src="math/in-046-light.svg" alt="c=a+b" align="middle"></picture>:
 
-\[
-c=a+b,\qquad \dot c=\dot a+\dot b
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-047-dark.svg"><img src="math/eq-047-light.svg" alt="c=a+b,\qquad \dot c=\dot a+\dot b"></picture></p>
 
-For a product \(c=ab\):
+For a product <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-047-dark.svg"><img src="math/in-047-light.svg" alt="c=ab" align="middle"></picture>:
 
-\[
-\dot c=\dot a b+a\dot b
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-048-dark.svg"><img src="math/eq-048-light.svg" alt="\dot c=\dot a b+a\dot b"></picture></p>
 
-For a composition \(c=f(a)\):
+For a composition <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-048-dark.svg"><img src="math/in-048-light.svg" alt="c=f(a)" align="middle"></picture>:
 
-\[
-\dot c=f'(a)\dot a
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-049-dark.svg"><img src="math/eq-049-light.svg" alt="\dot c=f'(a)\dot a"></picture></p>
 
 These rules allow derivative information to propagate through a sequence of supported operations.
 
@@ -737,6 +588,8 @@ These rules allow derivative information to propagate through a sequence of supp
 Automatic differentiation is exact up to floating-point rounding for the operations and derivative rules implemented. It does not automatically guarantee that every Luau function or data type is differentiable or supported. The module's actual operation coverage and input conventions must be checked against its implementation.
 
 **Potential applications:** sensitivity analysis, gradient-based optimization, parameter fitting, and numerical experimentation.
+
+---
 
 ## 6. Rigid-Body Dynamics
 
@@ -748,27 +601,25 @@ Rigid-body dynamics studies how forces and torques influence the translational a
 
 Newton's second law relates net force to linear acceleration:
 
-\[
-\mathbf{F}=m\mathbf{a}
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-050-dark.svg"><img src="math/eq-050-light.svg" alt="\mathbf{F}=m\mathbf{a}"></picture></p>
 
-Where \(m\) is mass and \(\mathbf{a}\) is linear acceleration.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-049-dark.svg"><img src="math/in-049-light.svg" alt="m" align="middle"></picture> is mass and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-050-dark.svg"><img src="math/in-050-light.svg" alt="\mathbf{a}" align="middle"></picture> is linear acceleration.
 
 ### 6.2 Rotational Dynamics
 
 Angular motion is influenced by torque and the body's inertia. In a general body-fixed formulation, rotational dynamics involve angular velocity, angular momentum, and the inertia tensor. A simplified relationship for rotation about a fixed principal axis is:
 
-\[
-	au=Ilpha
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-051-dark.svg"><img src="math/eq-051-light.svg" alt="\tau=I\alpha"></picture></p>
 
-Where \(	au\) is torque, \(I\) is the relevant moment of inertia, and \(lpha\) is angular acceleration.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-051-dark.svg"><img src="math/in-051-light.svg" alt="\tau" align="middle"></picture> is torque, <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-003-dark.svg"><img src="math/in-003-light.svg" alt="I" align="middle"></picture> is the relevant moment of inertia, and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-052-dark.svg"><img src="math/in-052-light.svg" alt="\alpha" align="middle"></picture> is angular acceleration.
 
 ### 6.3 Rigid-Body State
 
 A rigid-body model may track position, orientation, linear velocity, and angular velocity. The exact state representation and numerical integration approach are implementation-specific.
 
 **Potential applications:** mechanical simulation, robotics experiments, and motion modeling.
+
+---
 
 ## 7. Numerical Optimization
 
@@ -780,23 +631,17 @@ Numerical optimization seeks parameters that minimize or maximize an objective f
 
 A minimization problem can be written as:
 
-\[
-\min_{\mathbf{x}} f(\mathbf{x})
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-052-dark.svg"><img src="math/eq-052-light.svg" alt="\min_{\mathbf{x}} f(\mathbf{x})"></picture></p>
 
-Where \(f\) is an objective function and \(\mathbf{x}\) is a parameter vector.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-025-dark.svg"><img src="math/in-025-light.svg" alt="f" align="middle"></picture> is an objective function and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-053-dark.svg"><img src="math/in-053-light.svg" alt="\mathbf{x}" align="middle"></picture> is a parameter vector.
 
 ### 7.2 Gradient-Based Updates
 
 A basic gradient-descent update is:
 
-\[
-\mathbf{x}_{k+1}=\mathbf{x}_k-\eta
-abla f(\mathbf{x}_k)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-053-dark.svg"><img src="math/eq-053-light.svg" alt="\mathbf{x}_{k+1}=\mathbf{x}_k-\eta\nabla f(\mathbf{x}_k)"></picture></p>
 
-Where \(\eta\) is a step size and \(
-abla f\) is the gradient.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-054-dark.svg"><img src="math/in-054-light.svg" alt="\eta" align="middle"></picture> is a step size and <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-055-dark.svg"><img src="math/in-055-light.svg" alt="\nabla f" align="middle"></picture> is the gradient.
 
 The choice of step size, stopping criteria, conditioning, and objective landscape affects convergence. This equation illustrates a general optimization method; it does not assert that a particular optimizer is implemented by VectorForge.
 
@@ -805,6 +650,8 @@ The choice of step size, stopping criteria, conditioning, and objective landscap
 Optimization results should be assessed using objective values, gradient norms where available, iteration limits, and problem-specific constraints. A numerical result is not necessarily a global optimum.
 
 **Potential applications:** parameter estimation, calibration, curve fitting, and numerical modeling.
+
+---
 
 ## 8. Trajectory Planning
 
@@ -816,15 +663,11 @@ Trajectory planning constructs a time- or parameter-dependent description of mot
 
 A trajectory can be represented abstractly as:
 
-\[
-\mathbf{q}(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-054-dark.svg"><img src="math/eq-054-light.svg" alt="\mathbf{q}(t)"></picture></p>
 
 Its derivatives describe velocity and acceleration:
 
-\[
-\dot{\mathbf{q}}(t),\qquad \ddot{\mathbf{q}}(t)
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-055-dark.svg"><img src="math/eq-055-light.svg" alt="\dot{\mathbf{q}}(t),\qquad \ddot{\mathbf{q}}(t)"></picture></p>
 
 For spatial motion, the representation may include position and orientation, depending on the planning model.
 
@@ -838,13 +681,15 @@ A geometric path describes where motion travels, while a time parameterization d
 
 **Potential applications:** NPC movement, robotic motion experiments, camera motion, and procedural animation.
 
+---
+
 ## 9. Numerical Analysis and Stability
 
 Numerical analysis studies how mathematical problems can be approximated and solved using computational methods.
 
 This discipline is particularly important when implementing mathematical algorithms in a programming environment that uses finite-precision floating-point arithmetic.
 
-### 5.1 Floating-Point Precision
+### 9.1 Floating-Point Precision
 
 Computer arithmetic cannot represent every real number exactly.
 
@@ -852,19 +697,17 @@ As a result, calculations may accumulate small numerical errors.
 
 For example, two mathematically equivalent expressions may produce slightly different numerical results due to floating-point rounding.
 
-### 5.2 Numerical Tolerances
+### 9.2 Numerical Tolerances
 
 Instead of requiring exact equality, numerical algorithms commonly use a tolerance:
 
-\[
-|a-b|<\epsilon
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-056-dark.svg"><img src="math/eq-056-light.svg" alt="|a-b|&lt;\epsilon"></picture></p>
 
-Where \(\epsilon\) is a selected numerical threshold.
+Where <picture><source media="(prefers-color-scheme: dark)" srcset="math/in-056-dark.svg"><img src="math/in-056-light.svg" alt="\epsilon" align="middle"></picture> is a selected numerical threshold.
 
 The tolerance should depend on the scale and sensitivity of the calculation.
 
-### 5.3 Singular and Ill-Conditioned Systems
+### 9.3 Singular and Ill-Conditioned Systems
 
 A singular matrix does not have an ordinary inverse.
 
@@ -872,21 +715,19 @@ An ill-conditioned matrix may produce a solution that is highly sensitive to sma
 
 Such systems require careful numerical handling.
 
-### 5.4 Iterative Convergence
+### 9.4 Iterative Convergence
 
 Iterative algorithms progressively improve an approximation.
 
 A common stopping condition uses the residual:
 
-\[
-\|Ax-b\|_2<\epsilon
-\]
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="math/eq-057-dark.svg"><img src="math/eq-057-light.svg" alt="\|Ax-b\|_2&lt;\epsilon"></picture></p>
 
 However, convergence criteria should be selected according to the algorithm and problem scale.
 
 A low residual alone does not necessarily guarantee an accurate solution when the system is poorly conditioned.
 
-### 5.5 Numerical Integration
+### 9.5 Numerical Integration
 
 Numerical integration approximates definite integrals when analytical solutions are unavailable or inconvenient.
 
@@ -898,14 +739,18 @@ The approximation quality depends on the integration method, sampling strategy, 
 
 ## 10. Relationship Between Mathematical Domains
 
-The four mathematical modules address different problems, but their mathematical responsibilities can complement one another.
+The eight mathematical modules address different problems, but their mathematical responsibilities can complement one another.
 
 | Mathematical Domain | Related Module | Potential Relationship |
 |---|---|---|
-| Lie Groups | LieGroupKinematics | Spatial transformations and orientation |
-| Linear Algebra | SpectralLinearAlgebra | Numerical foundations for matrix-based computation |
-| Bayesian Estimation | BayesianStateEstimation | Prediction and uncertainty modeling |
-| Differential Geometry | DifferentialPathGeometry | Trajectory and curve analysis |
+| Lie Groups | `LieGroupKinematics` | Spatial transformations and orientation |
+| Linear Algebra | `SpectralLinearAlgebra` | Numerical foundations for matrix-based computation |
+| Bayesian Estimation | `BayesianStateEstimation` | Prediction and uncertainty modeling |
+| Differential Geometry | `DifferentialPathGeometry` | Trajectory and curve analysis |
+| Automatic Differentiation | `AutomaticDifferentiation` | Derivatives for optimization and Jacobians |
+| Rigid-Body Dynamics | `RigidBodyDynamics` | Force, torque, and motion modeling |
+| Numerical Optimization | `NumericalOptimization` | Parameter fitting and calibration |
+| Trajectory Planning | `TrajectoryPlanning` | Time-parameterized motion between states |
 
 For example, a hypothetical autonomous movement system could combine these concepts:
 

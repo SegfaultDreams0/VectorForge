@@ -2,6 +2,8 @@
 
 # VectorForge
 
+<img width="2048" height="280" alt="github jan banner" src="https://github.com/user-attachments/assets/f3f87889-c133-433b-b250-236218150d3f" />
+
 ### Advanced Computational Mathematics for Roblox Luau
 
 **English** · [简体中文](docs/readme/README_zh.md) · [日本語](docs/readme/README_ja.md) · [한국어](docs/readme/README_ko.md) · [Tiếng Việt](docs/readme/README_vi.md) · [ไทย](docs/readme/README_th.md) · [العربية](docs/readme/README_ar.md) · [MA Darija (9rombo idea)](docs/readme/README_darija.md)
